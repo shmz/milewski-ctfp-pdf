@@ -1,6 +1,6 @@
 OUTPUT ?= $(shell basename "$(shell dirname "$(INPUT)")")
 OUTPUT_DIRECTORY = $(shell pwd)/build
-LATEXMK_ARGS ?= -f -file-line-error -shell-escape -logfilewarninglist -interaction=nonstopmode -halt-on-error -norc -pdflatex="xelatex %O %S" -pdfxe
+LATEXMK_ARGS ?= -f -file-line-error -shell-escape -logfilewarninglist -interaction=nonstopmode -halt-on-error -norc -pdflatex="lualatex %O %S" -pdflua
 TEXINPUTS = ""
 TEXLIVE_RUN = TEXINPUTS=$(TEXINPUTS)
 LATEXMK_COMMAND = $(TEXLIVE_RUN) latexmk $(LATEXMK_ARGS)
@@ -19,6 +19,9 @@ ctfp-scala:
 
 ctfp-print:
 	cd src; $(LATEXMK_COMMAND) -jobname=ctfp-print ctfp-print.tex
+
+ctfp-print-ja:
+	cd src; $(LATEXMK_COMMAND) -jobname=ctfp-print-ja ctfp-print-ja.tex
 
 ctfp-print-ocaml:
 	cd src; $(LATEXMK_COMMAND) -jobname=ctfp-print-ocaml ctfp-print-ocaml.tex
