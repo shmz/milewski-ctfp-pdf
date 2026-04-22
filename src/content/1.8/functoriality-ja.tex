@@ -1,0 +1,491 @@
+% !TEX root = ../../ctfp-print.tex
+
+\lettrine[lhang=0.17]{関}{手とは何かがわかり、}いくつかの例も見た。では、小さな関手から大きな関手を
+構築する方法を見ていこう。特に、どの型コンストラクタ（圏における対象間の写像に対応する）が
+関手（射間の写像も含む）に拡張できるかを見るのは興味深い。
+
+\section{双関手}
+
+関手は$\Cat$（圏の圏）における射であるから、射――特に関数――に関する多くの直感が関手にも適用される。
+たとえば、2引数の関数があるように、2引数の関手、すなわち\newterm{双関手}がある。対象については、
+双関手は圏$\cat{C}$からの対象と圏$\cat{D}$からの対象のペアを圏$\cat{E}$の対象に写す。
+これは圏$\cat{C}\times{}\cat{D}$の\newterm{デカルト積}から$\cat{E}$への写像であるということだ。
+
+\begin{figure}[H]
+  \centering\includegraphics[width=0.3\textwidth]{images/bifunctor.jpg}
+\end{figure}
+
+\noindent
+これは非常に単純明快だ。しかし関手性とは、双関手が射も写さなければならないことを意味する。
+今度は、$\cat{C}$からの射と$\cat{D}$からの射のペアを$\cat{E}$の射に写さなければならない。
+
+射のペアは積圏$\cat{C}\times{}\cat{D}$における単一の射だ。デカルト積圏における射を、
+1つの対象のペアから別の対象のペアへ向かう射のペアとして定義する。これらの射のペアは
+明らかな方法で合成できる：
+\[(f, g) \circ (f', g') = (f \circ f', g \circ g')\]
+合成は結合的で、恒等元――恒等射のペア$(\id, \id)$――を持つ。よって圏のデカルト積は
+確かに圏だ。
+
+双関手について考えやすい方法は、それを各引数について別々に関手と見なすことだ。
+つまり、関手則――結合性と恒等保存――を関手から双関手に翻訳するのではなく、各引数について
+個別に確認すれば十分だ。しかし一般には、各引数での関手性を別々に確認しても、
+合同の関手性を証明するには不十分だ。合同の関手性が成り立たない圏を\newterm{前モノイダル}と呼ぶ。
+
+Haskellで双関手を定義しよう。この場合、3つの圏はすべて同じ：Haskell型の圏だ。
+双関手は2つの型引数を取る型コンストラクタだ。以下はライブラリ\code{Control.Bifunctor}から
+直接取ってきた\code{Bifunctor}型クラスの定義だ：
+
+\src{snippet01}
+
+\begin{figure}[H]
+  \centering\includegraphics[width=0.3\textwidth]{images/bimap.jpg}
+  \caption{bimap}
+\end{figure}
+
+型変数\code{f}が双関手を表す。すべての型シグネチャで常に2つの型引数に適用されているのがわかる。
+最初の型シグネチャは\code{bimap}を定義している：2つの関数を同時に写すものだ。結果は双関手の
+型コンストラクタによって生成される型上で作用する、持ち上げられた関数\code{(f a b -> f c d)}だ。
+\code{bimap}には\code{first}と\code{second}を使ったデフォルト実装がある。（前述のとおり、
+これが常に機能するわけではない。2つの写像が可換でない場合、つまり\code{first g . second h}が
+\code{second h . first g}と同じでない場合がある。）
+
+
+\noindent
+他の2つの型シグネチャ、\code{first}と\code{second}は、\code{f}の第1引数と第2引数それぞれについて
+関手性を証明する2つの\code{fmap}だ。
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}{0.45\textwidth}
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/first.jpg} % first figure itself
+    \caption{first}
+  \end{minipage}\hfill
+  \begin{minipage}{0.45\textwidth}
+    \centering
+    \includegraphics[width=0.6\textwidth]{images/second.jpg} % second figure itself
+    \caption{second}
+  \end{minipage}
+\end{figure}
+
+\noindent
+型クラスの定義は、\code{bimap}を使ったそれらのデフォルト実装を提供している。
+
+\code{Bifunctor}のインスタンスを宣言するとき、\code{bimap}を実装して\code{first}と\code{second}
+のデフォルトを受け入れるか、\code{first}と\code{second}の両方を実装して\code{bimap}のデフォルトを
+受け入れるか選択できる（もちろん3つすべてを実装してもよいが、その場合は互いにこのように関連している
+ことを保証するのはあなたの責任だ）。
+
+\section{積と余積の双関手}
+
+双関手の重要な例は圏論的な積――\hyperref[products-and-coproducts]{普遍的構成}によって定義される
+2つの対象の積だ。任意の対象のペアについて積が存在するなら、それらの対象から積への写像は
+双関手的だ。これは一般に真であり、Haskellでも特に真だ。以下は対のコンストラクタの\code{Bifunctor}
+インスタンスだ――最もシンプルな積型：
+
+\src{snippet02}[b]
+選択肢はほとんどない：\code{bimap}は単に最初の関数を対の第1成分に、2番目の関数を第2成分に適用する。
+型を考えれば、コードはほぼ自明だ：
+
+\src{snippet03}
+ここでの双関手の作用は型のペアを作ることで、たとえば：
+
+\begin{snip}{haskell}
+(,) a b = (a, b)
+\end{snip}
+双対性により、圏内のすべての対象ペアについて余積が定義されていれば、余積も双関手だ。
+Haskellでは、\code{Either}型コンストラクタが\code{Bifunctor}のインスタンスであることがその例だ：
+
+\src{snippet04}[b]
+このコードも自明だ。
+
+ここで、モノイダル圏について話したことを思い出そう。モノイダル圏は対象に作用する二項演算子と
+単位対象を定義する。$\Set$はデカルト積についてモノイダル圏であり、単元集合が単位元だと述べた。
+また、空集合を単位元とする非交和についてもモノイダル圏だ。言及しなかったのは、モノイダル圏の
+要件の1つが二項演算子が双関手でなければならないということだ。これは非常に重要な要件だ――
+モノイダル積が圏の構造（射によって定義される）と整合していてほしいからだ。これでモノイダル圏の
+完全な定義に一歩近づいた（まだ自然性について学ぶ必要があるが、それはまた今度だ）。
+
+\section{関手的代数的データ型}
+
+関手であることがわかったパラメータ化されたデータ型の例をいくつか見てきた――それらに対して
+\code{fmap}を定義できた。複雑なデータ型はより単純なデータ型から構築される。特に、代数的データ型
+（\acronym{ADT}）は和と積を使って作られる。和と積が関手的であることは先ほど見た。また関手が
+合成されることも知っている。だから\acronym{ADT}の基本的な構成要素が関手的であることを示せれば、
+パラメータ化された\acronym{ADT}も関手的だとわかる。
+
+では、パラメータ化された代数的データ型の構成要素とは何か？まず、\code{Maybe}の\code{Nothing}や
+\code{List}の\code{Nil}のように、関手の型パラメータに依存しない要素がある。これらは
+\code{Const}関手と等価だ。\code{Const}関手はその型パラメータを無視する（実際には、関心のある
+\emph{2番目}の型パラメータを無視し、最初のパラメータは定数として保持する）。
+
+次に、\code{Maybe}の\code{Just}のように、型パラメータそのものを単に包む要素がある。これらは
+恒等関手と等価だ。恒等関手については、\emph{Cat}における恒等射として以前に言及したが、
+Haskellでの定義は与えなかった。その定義を示そう：
+
+\src{snippet05}
+
+\src{snippet06}
+\code{Identity}は型\code{a}の値をちょうど1つ（不変値として）常に格納する最もシンプルなコンテナ
+と考えることができる。
+
+代数的データ構造における他のすべてのものは、これら2つのプリミティブを積と和を使って構築される。
+
+この新しい知識を持って、\code{Maybe}型コンストラクタを新鮮な目で見てみよう：
+
+\src{snippet07}
+これは2つの型の和であり、和が関手的であることはわかっている。最初の部分\code{Nothing}は
+\code{a}に作用する\code{Const ()}として表せる（\code{Const}の最初の型パラメータは単位型に
+設定される――後でより興味深い\code{Const}の使い方を見ることになる）。2番目の部分は恒等関手の
+別名に過ぎない。\code{Maybe}を同型を除いて次のように定義することができた：
+
+\src{snippet08}
+つまり\code{Maybe}は、双関手\code{Either}と2つの関手\code{Const ()}および\code{Identity}の
+合成だ（\code{Const}は本当に双関手だが、ここでは常に部分適用して使う）。
+
+関手の合成が関手であることはすでに見た――双関手についても同様だと容易に納得できる。必要なのは、
+双関手と2つの関手の合成が射にどう作用するかを考えることだ。2つの射が与えられたとき、一方を
+ある関手で、他方を別の関手で持ち上げる。そして得られた持ち上げられた射のペアを双関手で持ち上げる。
+
+この合成をHaskellで表現できる。双関手\code{bf}（2つの型を引数として取る型コンストラクタである
+型変数）、2つの関手\code{fu}と\code{gu}（それぞれ1つの型変数を取る型コンストラクタ）、および
+2つの通常の型\code{a}と\code{b}によってパラメータ化されるデータ型を定義しよう。\code{fu}を
+\code{a}に、\code{gu}を\code{b}に適用し、得られた2つの型に\code{bf}を適用する：
+
+\src{snippet09}
+これが対象、つまり型に対する合成だ。Haskellで型コンストラクタを型に適用する方法が、関数を引数に
+適用する方法と同じ構文であることに注目しよう。
+
+少し混乱してきたなら、\code{BiComp}に\code{Either}、\code{Const ()}、\code{Identity}、\code{a}、
+\code{b}をこの順に適用してみよう。\code{Maybe b}の素のバージョンが得られる（\code{a}は無視される）。
+
+新しいデータ型\code{BiComp}は\code{a}と\code{b}について双関手だが、それは\code{bf}が
+\code{Bifunctor}で、\code{fu}と\code{gu}が\code{Functor}である場合に限る。コンパイラは
+\code{bf}に対して\code{bimap}の定義が、\code{fu}と\code{gu}に対して\code{fmap}の定義が
+利用可能であることを知っていなければならない。Haskellでは、これはインスタンス宣言の前提条件として
+表現される：クラス制約のセットに二重矢印が続く：
+
+\src{snippet10}[b]
+\code{BiComp}に対する\code{bimap}の実装は、\code{bf}の\code{bimap}と\code{fu}・\code{gu}の
+2つの\code{fmap}を使って与えられる。\code{BiComp}が使われるたびに、コンパイラは自動的に
+すべての型を推論し、正しいオーバーロードされた関数を選択する。
+
+\code{bimap}の定義における\code{x}は次の型を持つ：
+
+\src{snippet11}
+かなり複雑だ。外側の\code{bimap}は外側の\code{bf}の層を突き破り、2つの\code{fmap}は
+それぞれ\code{fu}と\code{gu}の下に潜る。\code{f1}と\code{f2}の型が次のとき：
+
+\src{snippet12}
+最終結果の型は\code{bf (fu a') (gu b')}だ：
+
+\src{snippet13}[b]
+ジグソーパズルが好きなら、このような型の操作は何時間でも楽しめるだろう。
+
+結局、\code{Maybe}が関手であることを証明する必要はなかった――このことは\code{Maybe}が
+2つの関手的プリミティブの和として構成されていることから自然に導かれる。
+
+洞察力のある読者はこう問うかもしれない：代数的データ型の\code{Functor}インスタンスの導出が
+そんなに機械的なら、コンパイラが自動化できないのか？実際できるし、される。ソースファイルの
+先頭に次の行を含めることで特定のHaskell拡張を有効にする必要がある：
+
+\begin{snip}{haskell}
+{-# LANGUAGE DeriveFunctor #-}
+\end{snip}
+そしてデータ構造に\code{deriving Functor}を追加する：
+
+\begin{snip}{haskell}
+data Maybe a = Nothing | Just a deriving Functor
+\end{snip}
+対応する\code{fmap}が自動的に実装される。
+
+代数的データ構造の規則性により、\code{Functor}だけでなく、以前述べた\code{Eq}型クラスを含む
+いくつかの他の型クラスのインスタンスを導出することが可能だ。コンパイラに独自の型クラスの
+インスタンスを導出させる選択肢もあるが、それは少し高度だ。アイデアは同じだ：基本的な構成要素と
+和・積の振る舞いを提供し、残りはコンパイラに任せる。
+
+\section{C++における関手}
+
+C++プログラマーであれば、関手の実装については当然自分でやるしかない。しかし、C++でいくつかの
+代数的データ構造の型を認識できるはずだ。そのようなデータ構造がジェネリックテンプレートとして
+作られているなら、それに対して\code{fmap}を素早く実装できるはずだ。
+
+木のデータ構造を見てみよう。Haskellでは再帰的な和型として定義する：
+
+\src{snippet14}
+前述のとおり、C++で和型を実装する1つの方法はクラス階層を通じてだ。オブジェクト指向言語では、
+\code{fmap}を基底クラス\code{Functor}の仮想関数として実装し、すべてのサブクラスでオーバーライドする
+のが自然だろう。残念ながら、\code{fmap}はテンプレートで、作用するオブジェクトの型（\code{this}
+ポインタ）だけでなく、適用される関数の戻り型によってもパラメータ化されるため、これは不可能だ。
+C++では仮想関数はテンプレート化できない。\code{fmap}を汎用の自由関数として実装し、パターンマッチングを
+\code{dynamic\_cast}で置き換える。
+
+動的キャストをサポートするために基底クラスには少なくとも1つの仮想関数が必要なので、
+デストラクタを仮想にする（これはいずれにせよ良い考えだ）：
+
+\begin{snip}{cpp}
+template<typename T>
+struct Tree {
+    virtual ~Tree() {}
+};
+\end{snip}
+\code{Leaf}は\code{Identity}関手を変装したものに過ぎない：
+
+\begin{snip}{cpp}
+template<typename T>
+struct Leaf : public Tree<T> {
+    T _label;
+    Leaf(T l) : _label(l) {}
+};
+\end{snip}
+\code{Node}は積型だ：
+
+\begin{snip}{cpp}
+template<typename T>
+struct Node : public Tree<T> {
+    Tree<T> * _left;
+    Tree<T> * _right;
+    Node(Tree<T> * l, Tree<T> * r) : _left(l), _right(r) {}
+};
+\end{snip}
+\code{fmap}を実装するとき、\code{Tree}の型に対する動的ディスパッチを活用する。\code{Leaf}の
+ケースは\code{Identity}バージョンの\code{fmap}を適用し、\code{Node}のケースは\code{Tree}関手の
+2つのコピーと合成された双関手のように扱う。C++プログラマーとして、このような観点でコードを
+分析することには慣れていないかもしれないが、圏論的思考の良い練習になる。
+
+\begin{snip}{cpp}
+template<typename A, typename B>
+Tree<B> * fmap(std::function<B(A)> f, Tree<A> * t) {
+    Leaf<A> * pl = dynamic_cast <Leaf<A>*>(t);
+    if (pl)
+        return new Leaf<B>(f (pl->_label));
+    Node<A> * pn = dynamic_cast<Node<A>*>(t);
+    if (pn)
+        return new Node<B>( fmap<A>(f, pn->_left)
+                          , fmap<A>(f, pn->_right));
+    return nullptr;
+}
+\end{snip}
+簡潔さのためにメモリやリソース管理の問題は無視したが、プロダクションコードではおそらく
+スマートポインタ（ポリシーによってユニークか共有か）を使うだろう。
+
+Haskellの\code{fmap}の実装と比較しよう：
+
+\src{snippet15}
+この実装もコンパイラが自動的に導出できる。
+
+\section{Writerファンクター}
+
+\hyperref[kleisli-categories]{クライスリ圏}について話したとき、戻ってくると約束した。
+その圏の射は\code{Writer}データ構造を返す「飾り付けられた」関数として表されていた。
+
+\src{snippet16}
+飾り付けは何らかの形で自己関手に関係していると述べた。実際、\code{Writer}型コンストラクタは
+\code{a}について関手的だ。\code{fmap}を実装する必要さえない。なぜなら単純な積型だからだ。
+
+しかし、クライスリ圏と関手の関係は一般に何だろうか？クライスリ圏は圏として、合成と恒等を定義する。
+合成がフィッシュ演算子によって与えられることを思い出そう：
+
+\src{snippet17}
+そして恒等射は\code{return}と呼ばれる関数によって与えられる：
+
+\src{snippet18}
+これら2つの関数の型を（かなり）長い時間見ていると、それらを組み合わせて\code{fmap}として
+機能する正しい型シグネチャを持つ関数を作る方法がわかる。次のように：
+
+\src{snippet19}
+ここで、フィッシュ演算子は2つの関数を組み合わせている：一方はおなじみの\code{id}、もう一方は
+ラムダの引数に\code{f}を作用させた結果に\code{return}を適用するラムダ式だ。最も頭を悩ませるのは
+おそらく\code{id}の使い方だろう。フィッシュ演算子の引数は「通常の」型を取って飾り付けられた型を
+返す関数であるべきではないか？実はそうでもない。\code{a -> Writer b}の\code{a}が「通常の」型で
+なければならないとは誰も言っていない。型変数なので何でもよく、特に\code{Writer b}のような
+飾り付けられた型でもよい。
+
+つまり、\code{id}は\code{Writer a}を取り\code{Writer a}に変換する。フィッシュ演算子は
+\code{a}の値を取り出し、\code{x}としてラムダに渡す。そこで\code{f}が\code{b}に変換し、
+\code{return}が飾り付けて\code{Writer b}にする。すべてまとめると、\code{Writer a}を取って
+\code{Writer b}を返す関数が得られる。それがまさに\code{fmap}が生成すべきものだ。
+
+この議論が非常に一般的であることに注意しよう：\code{Writer}を任意の型コンストラクタに
+置き換えられる。フィッシュ演算子と\code{return}をサポートする限り、\code{fmap}も定義できる。
+だから、クライスリ圏における飾り付けは常に関手だ（ただし、すべての関手がクライスリ圏を生み出す
+わけではない）。
+
+定義したばかりの\code{fmap}が\code{deriving Functor}でコンパイラが導出したものと同じか
+疑問に思うかもしれない。興味深いことに、同じだ。これはHaskellが多相関数を実装する方法による。
+\newterm{パラメータ多相}と呼ばれ、いわゆる\newterm{フリーの定理}の源だ。そのような定理の1つは、
+ある型コンストラクタに対して\code{fmap}の実装が存在し、それが恒等を保つなら、それは一意である
+というものだ。
+
+\section{共変関手と反変関手}
+
+Writerファンクターを振り返ったので、Readerファンクターに戻ろう。部分適用された関数矢印型
+コンストラクタに基づいていた：
+
+\src{snippet20}
+型シノニムとして書き直せる：
+
+\src{snippet21}
+そのための\code{Functor}インスタンスは、前に見たとおり次のようになる：
+
+\src{snippet22}
+しかし、対のコンストラクタや\code{Either}型コンストラクタと同様に、関数型コンストラクタも
+2つの型引数を取る。対と\code{Either}は両方の引数について関手的だった――双関手だった。
+関数コンストラクタも双関手だろうか？
+
+最初の引数について関手的にしてみよう。型シノニムから始める――\code{Reader}と同じだが
+引数が入れ替わっている：
+
+\src{snippet23}
+今度は戻り型\code{r}を固定して、引数の型\code{a}を変化させる。型を合わせて\code{fmap}を
+実装できるか見てみよう。\code{fmap}の型シグネチャはこうなるはずだ：
+
+\src{snippet24}
+\code{a}を取りそれぞれ\code{b}と\code{r}を返す2つの関数だけでは、\code{b}を取って
+\code{r}を返す関数を作る方法がない！最初の関数を何らかの形で逆転させて、\code{b}を取って
+\code{a}を返すようにできれば話は別だ。任意の関数を逆転させることはできないが、
+反対圏に移ることはできる。
+
+簡単なまとめ：すべての圏$\cat{C}$に対して双対圏$\cat{C}^\mathit{op}$がある。$\cat{C}$と
+同じ対象を持つが、すべての矢印が逆向きの圏だ。
+
+$\cat{C}^\mathit{op}$から別の圏$\cat{D}$への関手を考えよう：
+\[F \Colon \cat{C}^\mathit{op} \to \cat{D}\]
+このような関手は$\cat{C}^\mathit{op}$における射$f^\mathit{op} \Colon a \to b$を
+$\cat{D}$における射$F f^\mathit{op} \Colon F a \to F b$に写す。しかし射$f^\mathit{op}$は
+もとの圏$\cat{C}$における射$f \Colon b \to a$に密かに対応している。方向が逆転していることに
+注目しよう。
+
+さて、$F$は通常の関手だが、$F$に基づいて別の写像$G$を定義できる。これは関手ではない。
+$\cat{C}$から$\cat{D}$への写像だ。$F$と同じように対象を写すが、射を写すときは逆転させる。
+$\cat{C}$における射$f \Colon b \to a$を取り、まず反対射$f^\mathit{op} \Colon a \to b$に写し、
+次に関手$F$を使ってそれを$F f^\mathit{op} \Colon F a \to F b$に得る。
+
+$F a$と$G a$が同じで$F b$と$G b$が同じであることを考えると、全体の過程は次のように
+描述できる：$G f \Colon (b \to a) \to (G a \to G b)$
+これは「ひとひねり加えた関手」だ。このように射の方向を逆転させる圏の写像を
+\emph{反変関手}と呼ぶ。反変関手は反対圏からの通常の関手に過ぎないことに注目しよう。
+通常の関手――これまで学んできた種類――はちなみに\emph{共変}関手と呼ばれる。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=40mm]{images/contravariant.jpg}
+\end{figure}
+
+\noindent
+以下はHaskellで反変関手（実際には反変\emph{自己}関手）を定義する型クラスだ：
+
+\src{snippet25}
+型コンストラクタ\code{Op}はそのインスタンスだ：
+
+\src{snippet26}
+関数\code{f}は\code{Op}の中身――関数\code{g}――の\emph{前}（つまり右側）に挿入されることに
+注目しよう。
+
+\code{Op}の\code{contramap}の定義は、引数が入れ替わった関数合成演算子に過ぎないことに気づけば、
+さらに簡潔にできる。引数を入れ替えるための\code{flip}という特別な関数がある：
+
+\src{snippet27}
+これを使うと：
+
+\src{snippet28}
+
+\section{プロ関手}
+
+関数矢印演算子は第1引数について反変で、第2引数について共変であることを見た。そのような
+ものに名前はあるか？ターゲット圏が$\Set$であれば、そのようなものを\newterm{プロ関手}と
+呼ぶ。反変関手は反対圏からの共変関手と等価であるから、プロ関手は次のように定義される：
+\[\cat{C}^\mathit{op} \times \cat{D} \to \Set\]
+大まかな近似として、Haskell型は集合なので、\code{Profunctor}という名前を2引数の型コンストラクタ
+\code{p}に適用する。それは第1引数について反関手的で第2引数について関手的なものだ。以下は
+\code{Data.Profunctor}ライブラリから取った適切な型クラスだ：
+
+\src{snippet29}[b]
+3つの関数すべてにデフォルト実装がある。\code{Bifunctor}と同様に、\code{Profunctor}のインスタンスを
+宣言するとき、\code{dimap}を実装して\code{lmap}と\code{rmap}のデフォルトを受け入れるか、
+\code{lmap}と\code{rmap}の両方を実装して\code{dimap}のデフォルトを受け入れるかを選択できる。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/dimap.jpg}
+  \caption{dimap}
+\end{figure}
+
+\noindent
+これで、関数矢印演算子が\code{Profunctor}のインスタンスであると主張できる：
+
+\src{snippet30}[b]
+プロ関手はHaskellのlensライブラリに応用がある。エンドとコエンドについて話すときにまた見ることになる。
+
+\section{ホム関手}
+
+上記の例は、対象$a$と$b$のペアを取り、それらの間の射の集合であるホム集合$\cat{C}(a, b)$を
+割り当てる写像が関手であるという、より一般的な主張の反映だ。これは積圏
+$\cat{C}^\mathit{op}\times{}\cat{C}$から集合の圏$\Set$への関手だ。
+
+射への作用を定義しよう。$\cat{C}^\mathit{op}\times{}\cat{C}$における射は$\cat{C}$からの
+射のペアだ：
+\begin{gather*}
+  f \Colon a' \to a \\
+  g \Colon b \to b'
+\end{gather*}
+このペアの持ち上げは、集合$\cat{C}(a, b)$から集合$\cat{C}(a', b')$への射（関数）でなければならない。
+$\cat{C}(a, b)$の任意の元$h$（$a$から$b$への射）を取り、それに次を割り当てる：
+\[g \circ h \circ f\]
+これが$\cat{C}(a', b')$の元だ。
+
+見てわかるように、ホム関手はプロ関手の特別な場合だ。
+
+\section{課題}
+
+\begin{enumerate}
+  \tightlist
+  \item
+        データ型：
+
+        \begin{snip}{haskell}
+data Pair a b = Pair a b
+\end{snip}
+
+        が双関手であることを示せ。追加点として、\code{Bifunctor}の3つのメソッドすべてを実装し、
+        等式推論を使って、これらの定義が適用可能な場合にデフォルト実装と互換性があることを示せ。
+  \item
+        \code{Maybe}の標準定義と次のデシュガリングの間の同型を示せ：
+
+        \begin{snip}{haskell}
+type Maybe' a = Either (Const () a) (Identity a)
+\end{snip}
+
+        ヒント：2つの実装間の2つの写像を定義せよ。追加点として、等式推論を使ってそれらが
+        互いに逆であることを示せ。
+  \item
+        別のデータ構造を試してみよう。\code{List}の前身なので\code{PreList}と呼ぶことにする。
+        再帰を型パラメータ\code{b}で置き換えている。
+
+        \begin{snip}{haskell}
+data PreList a b = Nil | Cons a b
+\end{snip}
+
+        \code{PreList}を自身に再帰的に適用することで以前の\code{List}の定義を復元できる
+        （不動点について話すときにどうやるか見ることになる）。
+
+        \code{PreList}が\code{Bifunctor}のインスタンスであることを示せ。
+  \item
+        次のデータ型が\code{a}と\code{b}について双関手を定義することを示せ：
+
+        \begin{snip}{haskell}
+data K2 c a b = K2 c
+
+data Fst a b = Fst a
+
+data Snd a b = Snd b
+\end{snip}
+
+        追加点として、Conor McBrideの論文\urlref{http://strictlypositive.org/CJ.pdf}{Clowns to the Left of
+          me, Jokers to the Right}と照らし合わせて答えを確認せよ。
+  \item
+        Haskell以外の言語で双関手を定義せよ。その言語でジェネリックな対について\code{bimap}を実装せよ。
+  \item
+        \code{std::map}は2つのテンプレート引数\code{Key}と\code{T}について双関手とプロ関手の
+        どちらと見なすべきか？このデータ型をそのようにするためにどのように再設計するか？
+\end{enumerate}

@@ -1,0 +1,371 @@
+% !TEX root = ../../ctfp-print.tex
+
+\lettrine[lhang=0.17]{型}{と純粋関数を}圏としてモデル化する方法を見てきた。また、
+圏論において副作用、つまり非純粋関数をモデル化する方法があることも述べた。そのよう
+な例を一つ見てみよう：実行をログまたはトレースする関数だ。これは命令型言語では、次の
+ようにグローバルな状態を変更することで実装される可能性が高い：
+
+\begin{snip}{cpp}
+string logger;
+
+bool negate(bool b) {
+    logger += "Not so! ";
+    return !b;
+}
+\end{snip}
+これが純粋関数ではないことはわかる。なぜならメモ化されたバージョンはログを生成できな
+いからだ。この関数は\newterm{副作用}を持つ。
+
+現代のプログラミングでは、できる限りグローバルな可変状態から離れようとする――少なく
+とも並行性の複雑さのためだけでもそうだ。そして、このようなコードをライブラリに入れる
+ことは決してないだろう。
+
+幸運なことに、この関数を純粋にすることは可能だ。ログを明示的に渡し入れればいいだけだ。
+文字列引数を追加し、通常の出力と更新されたログを含む文字列をペアにしてみよう：
+
+\begin{snip}{cpp}
+pair<bool, string> negate(bool b, string logger) {
+    return make_pair(!b, logger + "Not so! ");
+}
+\end{snip}
+この関数は純粋で、副作用がなく、同じ引数で呼ばれるたびに同じペアを返し、必要であれば
+メモ化できる。しかし、ログの累積的な性質を考えると、特定の呼び出しに至るすべての可能
+な履歴をメモ化しなければならない。次のものに対して別々のメモエントリが必要だ：
+
+\begin{snip}{cpp}
+negate(true, "It was the best of times. ");
+\end{snip}
+および
+
+\begin{snip}{cpp}
+negate(true, "It was the worst of times. ");
+\end{snip}
+などなど。
+
+これはライブラリ関数としてもあまり良いインターフェースではない。呼び出し元は戻り型の
+文字列を無視することができるので、大きな負担ではない；しかし入力として文字列を渡すこ
+とを強いられ、これは不便かもしれない。
+
+より侵襲的でない方法で同じことをする方法はないか？関心事を分離する方法はないか？この
+単純な例では、関数\code{negate}の主な目的は一方のブール値を別のものに変えることだ。
+ログ記録は二次的なことだ。確かに、記録されるメッセージは関数に特有のものだが、メッセ
+ージを1つの連続したログに集約するタスクは別の関心事だ。関数に文字列を生成してほしいが、
+ログの生成の負担は軽減したい。そこで妥協案はこうだ：
+
+\begin{snip}{cpp}
+pair<bool, string> negate(bool b) {
+    return make_pair(!b, "Not so! ");
+}
+\end{snip}
+アイデアは、ログが関数呼び出しの\emph{間に}集約されるということだ。
+
+これがどのように行われるかを見るために、少しより現実的な例に切り替えよう。小文字を大
+文字に変換する、文字列から文字列への関数がある：
+
+\begin{snip}{cpp}
+string toUpper(string s) {
+    string result;
+    int (*toupperp)(int) = &toupper; // toupper is overloaded
+    transform(begin(s), end(s), back_inserter(result), toupperp);
+    return result;
+}
+\end{snip}
+そして空白で分割して文字列のベクターに分割する別の関数がある：
+
+\begin{snip}{cpp}
+vector<string> toWords(string s) {
+    return words(s);
+}
+\end{snip}
+実際の処理は補助関数\code{words}で行われる：
+
+\begin{snip}{cpp}
+vector<string> words(string s) {
+    vector<string> result{""};
+    for (auto i = begin(s); i != end(s); ++i)
+    {
+        if (isspace(*i))
+            result.push_back("");
+        else
+            result.back() += *i;
+    }
+    return result;
+}
+\end{snip}
+\code{toUpper}と\code{toWords}の関数を修正して、通常の戻り値の上にメッセージ文字列を
+乗せるようにしたい。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.3\textwidth]{images/piggyback.jpg}
+\end{figure}
+\noindent
+これらの関数の戻り値を「装飾」しよう。任意の型\code{A}の値を第1成分とし、文字列を第
+2成分とするペアをカプセル化するテンプレート\code{Writer}を定義することで、汎用的に行
+おう：
+
+\begin{snip}{cpp}
+template<typename A>
+using Writer = pair<A, string>;
+\end{snip}
+装飾された関数はこうだ：
+
+\begin{snip}{cpp}
+Writer<string> toUpper(string s) {
+    string result;
+    int (*toupperp)(int) = &toupper;
+    transform(begin(s), end(s), back_inserter(result), toupperp);
+    return make_pair(result, "toUpper ");
+}
+
+Writer<vector<string>> toWords(string s) {
+    return make_pair(words(s), "toWords ");
+}
+\end{snip}
+これら2つの関数を、文字列を大文字にして単語に分割し、その間ずっとそれらのアクションの
+ログを生成する別の装飾された関数に合成したい。これを行う方法はこうだ：
+
+\begin{snip}{cpp}
+Writer<vector<string>> process(string s) {
+    auto p1 = toUpper(s);
+    auto p2 = toWords(p1.first);
+    return make_pair(p2.first, p1.second + p2.second);
+}
+\end{snip}
+目標を達成した：ログの集約はもはや個々の関数の関心事ではなくなった。それらは自分自身
+のメッセージを生成し、それが外部で、より大きなログに連結される。
+
+このスタイルで書かれたプログラム全体を想像してほしい。それは繰り返しの多い、エラーが
+起こりやすいコードの悪夢だ。しかし私たちはプログラマーだ。繰り返しコードへの対処方法
+を知っている：抽象化だ！しかしこれは普通の抽象化ではない――\newterm{関数合成}そのもの
+を抽象化しなければならない。しかし合成は圏論の本質なので、コードをさらに書く前に、圏
+論的な観点から問題を分析しよう。
+
+\section{Writer圏}
+
+追加機能を乗せるために関数の戻り型を装飾するというアイデアは非常に実りが多いことがわ
+かる。その例はまだたくさん見ることになるだろう。出発点は型と関数の通常の圏だ。型は対
+象のままにし、射を装飾された関数として再定義しよう。
+
+例えば、\code{int}から\code{bool}への関数\code{isEven}を装飾したいとしよう。それを装
+飾された関数で表現される射に変える。重要な点は、装飾された関数がペアを返すにもかかわ
+らず、この射は依然として対象\code{int}と\code{bool}の間の矢印と見なされるということだ：
+
+\begin{snip}{cpp}
+pair<bool, string> isEven(int n) {
+    return make_pair(n % 2 == 0, "isEven ");
+}
+\end{snip}
+圏の法則により、この射を対象\code{bool}から何かへ向かう別の射と合成できるはずだ。特
+に、以前の\code{negate}と合成できるはずだ：
+
+\begin{snip}{cpp}
+pair<bool, string> negate(bool b) {
+    return make_pair(!b, "Not so! ");
+}
+\end{snip}
+入出力の不一致のため、明らかにこれらの2つの射を通常の関数と同じように合成することはで
+きない。それらの合成はこのようなものになるべきだ：
+
+\begin{snip}{cpp}
+pair<bool, string> isOdd(int n) {
+    pair<bool, string> p1 = isEven(n);
+    pair<bool, string> p2 = negate(p1.first);
+    return make_pair(p2.first, p1.second + p2.second);
+}
+\end{snip}
+だから、私たちが構築しているこの新しい圏における2つの射の合成のレシピはこうだ：
+
+\begin{enumerate}
+  \tightlist
+  \item
+        最初の射に対応する装飾された関数を実行する
+  \item
+        結果ペアの第1成分を抽出し、第2の射に対応する装飾された関数に渡す
+  \item
+        最初の結果の第2成分（文字列）と2番目の結果の第2成分（文字列）を連結する
+  \item
+        最終結果の第1成分と連結された文字列を組み合わせた新しいペアを返す。
+\end{enumerate}
+
+この合成をC++の高階関数として抽象化したければ、圏の3つの対象に対応する3つの型でパラメ
+ータ化されたテンプレートを使う必要がある。これは私たちの規則に従って合成可能な2つの装
+飾された関数を取り、3番目の装飾された関数を返す：
+
+\begin{snip}{cpp}
+template<typename A, typename B, typename C>
+function<Writer<C>(A)> compose(function<Writer<B>(A)> m1,
+                               function<Writer<C>(B)> m2)
+{
+    return [m1, m2](A x) {
+        auto p1 = m1(x);
+        auto p2 = m2(p1.first);
+        return make_pair(p2.first, p1.second + p2.second);
+    };
+}
+\end{snip}
+今、以前の例に戻り、この新しいテンプレートを使って\code{toUpper}と\code{toWords}の合
+成を実装できる：
+
+\begin{snip}{cpp}
+Writer<vector<string>> process(string s) {
+    return compose<string, string, vector<string>>(
+        toUpper, toWords)(s);
+}
+\end{snip}
+\code{compose}テンプレートへの型の受け渡しにはまだ多くのノイズがある。戻り型推論を持
+つ汎用ラムダ関数をサポートするC++14準拠のコンパイラがあれば、これを避けることができる
+（このコードのクレジットはEric Nieblerに帰する）：
+
+\begin{snip}{cpp}
+auto const compose = [](auto m1, auto m2) {
+    return [m1, m2](auto x) {
+        auto p1 = m1(x);
+        auto p2 = m2(p1.first);
+        return make_pair(p2.first, p1.second + p2.second);
+    };
+};
+\end{snip}
+この新しい定義では、\code{process}の実装は次のように簡略化される：
+
+\begin{snip}{cpp}
+Writer<vector<string>> process(string s) {
+    return compose(toUpper, toWords)(s);
+}
+\end{snip}
+しかしまだ終わっていない。新しい圏での合成を定義したが、恒等射とは何か？これらは通常
+の恒等関数ではない！型Aから型Aへの射でなければならない。つまり次の形式の装飾された
+関数だ：
+
+\begin{snip}{cpp}
+Writer<A> identity(A);
+\end{snip}
+合成に関して単位として振る舞わなければならない。合成の定義を見ると、恒等射は引数を変
+更せずに渡し、ログに空文字列のみを貢献するべきことがわかる：
+
+\begin{snip}{cpp}
+template<typename A>
+Writer<A> identity(A x) {
+    return make_pair(x, "");
+}
+\end{snip}
+定義した圏が確かに正当な圏であることを容易に確認できる。特に、合成は明らかに結合的だ。
+各ペアの第1成分に何が起こっているかを追うと、それは単に通常の関数合成であり、結合的だ。
+第2成分は連結されており、連結もまた結合的だ。
+
+洞察力のある読者は、この構成を文字列モノイドだけでなく任意のモノイドに一般化することが
+容易だと気づくかもしれない。\code{compose}内の\code{+}と\code{""}の代わりに
+\code{mappend}と\code{mempty}を使えばいい。文字列だけのログに制限する理由は実際にはな
+い。優れたライブラリ作成者はライブラリを機能させる最小限の制約を特定できるはずだ――
+ここでは、ログライブラリの唯一の要件はログがモノイド的性質を持つことだ。
+
+\section{HaskellにおけるWriter}
+
+Haskellでの同じことは少し簡潔で、コンパイラからも多くの助けを得られる。\code{Writer}
+型を定義することから始めよう：
+
+\src{snippet01}
+ここでは単に型エイリアスを定義している。C++の\code{typedef}（または\code{using}）に相
+当するものだ。型\code{Writer}は型変数\code{a}でパラメータ化されており、\code{a}と
+\code{String}のペアに相当する。ペアの構文は最小限だ：括弧内にカンマで区切られた2つの
+項目だけだ。
+
+射は任意の型からある\code{Writer}型への関数だ：
+
+\src{snippet02}
+合成を「魚」と呼ばれることもある面白い中置演算子として宣言しよう：
+
+\src{snippet03}
+これはそれぞれが関数である2つの引数を取り、関数を返す関数だ。最初の引数は型
+\code{(a -> Writer b)}、2番目は\code{(b -> Writer c)}、そして結果は
+\code{(a -> Writer c)}だ。
+
+これがこの中置演算子の定義だ――2つの引数\code{m1}と\code{m2}が魚のシンボルの両側に
+現れる：
+
+\src{snippet04}
+結果は1つの引数\code{x}のラムダ関数だ。ラムダはバックスラッシュとして書かれる――ギリ
+シャ文字$\lambda$の足を切り取ったものと考えてほしい。
+
+\code{let}式で補助変数を宣言できる。ここでは\code{m1}の呼び出しの結果が変数のペア
+\code{(y, s1)}にパターンマッチされ；\code{m2}の呼び出しの結果（最初のパターンからの
+引数\code{y}を使って）は\code{(z, s2)}にマッチされる。
+
+HaskellではC++でやったようなアクセサを使うのではなく、ペアをパターンマッチするのが一
+般的だ。それ以外は2つの実装の間にかなり直接的な対応がある。
+
+\code{let}式の全体の値はその\code{in}節で指定される：ここでは第1成分が\code{z}で第2
+成分が2つの文字列の連結\code{s1++s2}であるペアだ。
+
+圏の恒等射も定義するが、後でより明確になる理由から、それを\code{return}と呼ぶことに
+する。
+
+\src{snippet05}
+完全を期すため、装飾された関数\code{upCase}と\code{toWords}のHaskellバージョンを示そう：
+
+\src{snippet06}
+関数\code{map}はC++の\code{transform}に対応する。それは文字関数\code{toUpper}を文字
+列\code{s}に適用する。補助関数\code{words}は標準Preludeライブラリで定義されている。
+
+最後に、2つの関数の合成は魚演算子の助けを借りて達成される：
+
+\src{snippet07}
+
+\section{クライスリ圏}
+
+この圏をその場で発明したわけではないことに気づいたかもしれない。これはクライスリ圏――
+モナドに基づく圏――の例だ。モナドについて議論する準備はまだできていないが、それらがで
+きることの味を感じてほしかった。限られた目的のために、クライスリ圏は対象として基礎とな
+るプログラミング言語の型を持つ。型$A$から型$B$への射は、特定の装飾を使って$B$から導出
+された型へ$A$から向かう関数だ。各クライスリ圏はそのような射を合成する独自の方法と、そ
+の合成に関する恒等射を定義する。（後で、不正確な用語「装飾」が圏における自己関手の概念
+に対応することがわかるだろう。）
+
+この章の圏の基礎として使った特定のモナドは\newterm{Writerモナド}と呼ばれ、関数の実行
+をログまたはトレースするために使われる。これはまた、純粋な計算に効果を埋め込むより一般
+的なメカニズムの例でもある。以前、プログラミング言語の型と関数を（通常通りボトムを無視
+して）集合の圏でモデル化できることを見た。ここでは、このモデルを少し異なる圏、射が装飾
+された関数で表現される圏に拡張した。そこでの合成は一方の関数の出力を他方の入力に渡すだ
+け以上のことをする。遊べる自由度がもう1つある：合成そのものだ。これがまさに、命令型言
+語では副作用を使って伝統的に実装されるプログラムに単純な表示的意味論を与えることを可能
+にする自由度だとわかる。
+
+\section{課題}
+
+引数のすべての可能な値に対して定義されていない関数は部分関数と呼ばれる。これは数学的な
+意味での本当の関数ではないので、標準的な圏論の型にはまらない。しかしそれは装飾された型
+\code{optional}を返す関数で表現できる：
+
+\begin{snip}{cpp}
+template<typename A>
+class optional {
+    bool _isValid;
+    A _value;
+public:
+    optional()    : _isValid(false) {}
+    optional(A v) : _isValid(true), _value(v) {}
+    bool isValid() const { return _isValid; }
+    A value() const { return _value; }
+};
+\end{snip}
+例えば、装飾された関数\code{safe\_root}の実装はこうだ：
+
+\begin{snip}{cpp}
+optional<double> safe_root(double x) {
+    if (x >= 0) return optional<double>{sqrt(x)};
+    else return optional<double>{};
+}
+\end{snip}
+課題はこうだ：
+
+\begin{enumerate}
+  \tightlist
+  \item
+        部分関数のクライスリ圏を構成せよ（合成と恒等射を定義せよ）。
+  \item
+        引数がゼロと異なる場合にその有効な逆数を返す装飾された関数
+        \code{safe\_reciprocal}を実装せよ。
+  \item
+        関数\code{safe\_root}と\code{safe\_reciprocal}を合成して、可能なときに
+        \code{sqrt(1/x)}を計算する\code{safe\_root\_reciprocal}を実装せよ。
+\end{enumerate}

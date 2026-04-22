@@ -1,0 +1,552 @@
+% !TEX root = ../../ctfp-print.tex
+
+\lettrine[lhang=0.17]{壊}{れたレコードのように聞こえるかもしれないが、}関手についてこう言おう：
+関手は非常にシンプルだが強力なアイデアだ。圏論はそのようなシンプルで強力なアイデアに満ちている。
+関手は圏の間の写像だ。2つの圏$\cat{C}$と$\cat{D}$が与えられたとき、関手$F$は$\cat{C}$の対象を
+$\cat{D}$の対象に写す――これは対象上の関数だ。$a$が$\cat{C}$の対象であれば、$\cat{D}$における
+その像を$F a$と書く（括弧なし）。しかし、圏は対象だけではない――対象と、それらをつなぐ射がある。
+関手は射も写す――射上の関数だ。ただし、射を無計画に写すのではなく、つながりを保つ。つまり、
+$\cat{C}$の射$f$が対象$a$を対象$b$につないでいれば、
+\[f \Colon a \to b\]
+$\cat{D}$における$f$の像$F f$は$a$の像を$b$の像につなぐ：
+\[F f \Colon F a \to F b\]
+
+（これは数学とHaskellの記法を混ぜたものだが、今ではおそらく意味が分かるだろう。関手を対象や射に
+適用するときは括弧を使わない。）
+
+\begin{figure}[H]
+  \centering\includegraphics[width=0.3\textwidth]{images/functor.jpg}
+\end{figure}
+
+\noindent
+見てわかるように、関手は圏の構造を保つ：ある圏でつながっているものは別の圏でもつながる。しかし、
+圏の構造にはさらに射の合成もある。$h$が$f$と$g$の合成であれば：
+\[h = g \circ f\]
+$F$の下での$h$の像が$f$と$g$の像の合成であってほしい：
+\[F h = F g \circ F f\]
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.3\textwidth]{images/functorcompos.jpg}
+\end{figure}
+
+\noindent
+最後に、$\cat{C}$のすべての恒等射が$\cat{D}$の恒等射に写されてほしい：
+\[F \idarrow[a] = \idarrow[F a]\]
+
+\noindent
+ここで$\idarrow[a]$は対象$a$での恒等射、$\idarrow[F a]$は$F a$での恒等射だ。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.3\textwidth]{images/functorid.jpg}
+\end{figure}
+
+\noindent
+これらの条件により、関手は通常の関数よりもはるかに制約が多い。関手は圏の構造を保たなければならない。
+圏を射のネットワークでつながれた対象の集まりと考えると、関手はこの布地に引き裂きを入れることは
+許されない。対象を押しつぶしてもよく、複数の射を1つに糊付けしてもよいが、ものを引き離すことは
+決してできない。この「引き裂き不可」制約は、微積分で知っているかもしれない連続性の条件に似ている。
+この意味で、関手は「連続」だ（ただし、関手に対してはさらに制約の強い連続性の概念も存在する）。
+関数と同様に、関手は収縮と埋め込みの両方を行うことができる。ソース圏がターゲット圏よりはるかに
+小さい場合、埋め込みの側面がより顕著になる。極端な例として、ソースが自明な単元圏――1つの対象と
+1つの射（恒等射）を持つ圏――のとき、単元圏から任意の他の圏への関手は単にその圏の対象を1つ選ぶ。
+これは、単元集合からの射が対象集合の要素を選ぶという射の性質と完全に類似している。最も収縮する
+関手は定値関手$\Delta_c$と呼ばれる。ソース圏のすべての対象をターゲット圏の1つの選ばれた対象$c$に
+写す。またソース圏のすべての射を恒等射$\idarrow[c]$に写す。すべてを1つの特異点に押し込むブラック
+ホールのように振る舞う。この関手については、極限と余極限を議論するときに改めて見ることになる。
+
+\section{プログラミングにおける関手}
+
+地に足をつけて、プログラミングの話をしよう。型と関数の圏がある。この圏を自身に写す関手について
+話すことができる――そのような関手は\newterm{自己関手}と呼ばれる。では、型の圏における自己関手とは
+何か？まず第一に、型を型に写す。そのような写像の例はすでに見てきた――それがまさにそうであることに
+気づかずに。他の型によってパラメータ化された型の定義について話している。いくつかの例を見てみよう。
+
+\subsection{Maybe関手}
+
+\code{Maybe}の定義は型\code{a}から型\code{Maybe a}への写像だ：
+
+\src{snippet01}
+ここで重要な微妙さがある：\code{Maybe}自体は型ではなく、\emph{型コンストラクタ}だ。型に
+するためには\code{Int}や\code{Bool}のような型引数を与えなければならない。引数のない\code{Maybe}は
+型上の関数を表す。では、\code{Maybe}を関手にできるだろうか？（これ以降、プログラミングの文脈で
+関手について話すとき、ほぼ常に自己関手を意味する。）関手は対象（ここでは型）の写像だけでなく、
+射（ここでは関数）の写像でもある。\code{a}から\code{b}への任意の関数に対して：
+
+\src{snippet02}
+\code{Maybe a}から\code{Maybe b}への関数を生成したい。そのような関数を定義するには、
+\code{Maybe}の2つのコンストラクタに対応する2つのケースを考える必要がある。\code{Nothing}の
+ケースは単純だ：単に\code{Nothing}を返す。引数が\code{Just}であれば、関数\code{f}をその
+中身に適用する。つまり、\code{Maybe}の下での\code{f}の像はこの関数だ：
+
+\src{snippet03}
+（ちなみに、Haskellでは変数名にアポストロフィを使うことができる。このような場合にとても便利だ。）
+Haskellでは、関手の射写像部分を\code{fmap}と呼ばれる高階関数として実装する。\code{Maybe}の
+場合、その型シグネチャは次のようになる：
+
+\src{snippet04}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.35\textwidth]{images/functormaybe.jpg}
+\end{figure}
+
+\noindent
+\code{fmap}は関数を\emph{持ち上げる}とよく言われる。持ち上げられた関数は\code{Maybe}の値に
+作用する。カリー化のため、この型シグネチャは2通りに解釈できる：1引数の関数――それ自体が関数
+\code{(a -> b)}――として、\code{(Maybe a -> Maybe b)}という関数を返す；または\code{Maybe b}を
+返す2引数の関数として：
+
+\src{snippet05}
+前の議論に基づいて、\code{Maybe}に対する\code{fmap}の実装はこうなる：
+
+\src{snippet06}
+型コンストラクタ\code{Maybe}と関数\code{fmap}が関手を形成することを示すには、\code{fmap}が
+恒等射と合成を保つことを証明しなければならない。これらは「関手則」と呼ばれるが、単に圏の構造の
+保存を保証するものだ。
+
+\subsection{等式推論}
+
+関手則を証明するために、\newterm{等式推論}を使う。これはHaskellでよく使われる証明技法だ。
+Haskellの関数が等式として定義されているという事実を利用する：左辺は右辺に等しい。名前の衝突を
+避けるために変数名を変えながら、常に一方を他方に置き換えることができる。これは関数をインライン化
+するか、逆に式を関数にリファクタリングするようなものだと考えよう。恒等関数を例にとってみよう：
+
+\src{snippet07}
+例えば、ある式の中に\code{id y}があれば、\code{y}に置き換えることができる（インライン化）。
+さらに、\code{id}が式に適用されている場合、例えば\code{id (y + 2)}は、式そのもの\code{(y + 2)}
+に置き換えることができる。この置き換えは双方向に機能する：任意の式\code{e}を\code{id e}に
+置き換えることができる（リファクタリング）。関数がパターンマッチングで定義されている場合、
+各サブ定義を独立して使うことができる。例えば、上記の\code{fmap}の定義があれば、
+\code{fmap f Nothing}を\code{Nothing}に置き換えることができる（またはその逆も）。
+実際にどう機能するか見てみよう。恒等射の保存から始めよう：
+
+\src{snippet08}
+考慮すべきケースは2つ：\code{Nothing}と\code{Just}。最初のケースはこうだ（Haskellの擬似コードを
+使って左辺から右辺に変換する）：
+
+\begin{snip}{haskell}
+  fmap id Nothing
+= { definition of fmap }
+  Nothing
+= { definition of id }
+  id Nothing
+\end{snip}
+最後のステップで\code{id}の定義を逆向きに使ったことに注意しよう。式\code{Nothing}を
+\code{id\ Nothing}に置き換えた。実際には、このような証明は「両端からろうそくを燃やす」ように
+進め、途中で同じ式にたどり着く――ここでは\code{Nothing}だ。第2のケースも簡単だ：
+
+\begin{snip}{haskell}
+  fmap id (Just x)
+= { definition of fmap }
+  Just (id x)
+= { definition of id }
+  Just x
+= { definition of id }
+  id (Just x)
+\end{snip}
+次に、\code{fmap}が合成を保つことを示そう：
+
+\src{snippet09}
+まず\code{Nothing}のケース：
+
+\begin{snip}{haskell}
+  fmap (g . f) Nothing
+= { definition of fmap }
+  Nothing
+= { definition of fmap }
+  fmap g Nothing
+= { definition of fmap }
+  fmap g (fmap f Nothing)
+\end{snip}
+そして\code{Just}のケース：
+
+\begin{snip}{haskell}
+  fmap (g . f) (Just x)
+= { definition of fmap }
+  Just ((g . f) x)
+= { definition of composition }
+  Just (g (f x))
+= { definition of fmap }
+  fmap g (Just (f x))
+= { definition of fmap }
+  fmap g (fmap f (Just x))
+= { definition of composition }
+  (fmap g . fmap f) (Just x)
+\end{snip}
+等式推論が副作用を持つC++スタイルの「関数」に対しては機能しないことを強調しておく。このコードを
+考えてみよう：
+
+\begin{snip}{cpp}
+int square(int x) {
+    return x * x;
+}
+
+int counter() {
+    static int c = 0;
+    return c++;
+}
+
+double y = square(counter());
+\end{snip}
+等式推論を使えば、\code{square}をインライン化して次のようにできる：
+
+\begin{snip}{cpp}
+double y = counter() * counter();
+\end{snip}
+これは明らかに有効な変換ではなく、同じ結果は生じない。それにもかかわらず、C++コンパイラは
+\code{square}をマクロとして実装した場合に等式推論を使おうとし、悲惨な結果をもたらす。
+
+\subsection{Optional}
+
+関手はHaskellでは簡単に表現できるが、ジェネリックプログラミングと高階関数をサポートする任意の
+言語で定義できる。C++における\code{Maybe}の類似物、テンプレート型\code{optional}を考えてみよう。
+実装のスケッチを示す（実際の実装はもっと複雑で、引数を渡すさまざまな方法、コピーセマンティクス、
+C++特有のリソース管理の問題を扱う）：
+
+\begin{snip}{cpp}
+template<typename T>
+class optional {
+    bool _isValid; // the tag
+    T _v;
+public:
+    optional()    : _isValid(false) {}        // Nothing
+    optional(T x) : _isValid(true) , _v(x) {} // Just
+    bool isValid() const { return _isValid; }
+    T val() const { return _v; } };
+\end{snip}
+このテンプレートは関手の定義の一部、型の写像を提供する。任意の型\code{T}を新しい型
+\code{optional<T>}に写す。関数への作用を定義しよう：
+
+\begin{snip}{cpp}
+template<typename A, typename B>
+std::function<optional<B>(optional<A>)>
+fmap(std::function<B(A)> f) {
+    return [f](optional<A> opt) {
+        if (!opt.isValid())
+            return optional<B>{};
+        else
+            return optional<B>{ f(opt.val()) };
+    };
+}
+\end{snip}
+これは関数を引数として取り、関数を返す高階関数だ。アンカリー化されたバージョンはこうなる：
+
+\begin{snip}{cpp}
+template<typename A, typename B>
+optional<B> fmap(std::function<B(A)> f, optional<A> opt) {
+    if (!opt.isValid())
+        return optional<B>{};
+    else
+        return optional<B>{ f(opt.val()) };
+}
+\end{snip}
+\code{fmap}を\code{optional}のテンプレートメソッドにするという選択肢もある。この選択肢の多さが、
+C++で関手パターンを抽象化することを困難にしている。関手は継承すべきインターフェースにすべきか
+（残念ながら、テンプレートの仮想関数は持てない）？カリー化されたまたはアンカリー化された自由
+テンプレート関数にすべきか？C++コンパイラは欠けている型を正しく推論できるか、明示的に指定すべき
+か？入力関数\code{f}が\code{int}から\code{bool}を取るとしよう。コンパイラはどのように\code{g}の
+型を把握するか：
+
+\begin{snip}{cpp}
+auto g = fmap(f);
+\end{snip}
+特に将来、複数の関手が\code{fmap}をオーバーロードする場合？（すぐにさらなる関手を見ていく。）
+
+\subsection{型クラス}
+
+では、Haskellはどのように関手を抽象化するのか？型クラスの仕組みを使う。型クラスは共通のインター
+フェースをサポートする型のファミリを定義する。例えば、等値比較をサポートするオブジェクトのクラス
+は次のように定義される：
+
+\src{snippet10}
+この定義は、型\code{a}が\code{Eq}クラスに属するのは、型\code{a}の2つの引数を取って\code{Bool}を
+返す演算子\code{(==)}をサポートする場合だと述べている。特定の型が\code{Eq}であることをHaskellに
+伝えるには、この\code{クラスのインスタンス}として宣言し、\code{(==)}の実装を提供しなければならない。
+例えば、2D\code{Point}（2つの\code{Float}の直積型）の定義があれば：
+
+\src{snippet11}
+点の等値を定義できる：
+
+\src{snippet12}
+ここで、2つのパターン\code{(Pt x y)}と\code{(Pt x' y')}の間の中置記法で演算子\code{(==)}
+（定義中のもの）を使った。関数の本体は単一の等号に続く。\code{Point}が\code{Eq}のインスタンスと
+して宣言されれば、点の等値比較を直接行える。C++やJavaと異なり、\code{Point}を定義するときに
+\code{Eq}クラス（またはインターフェース）を指定する必要はない――後からクライアントコードで
+行うことができる。型クラスはまた、関数（と演算子）をオーバーロードするHaskellの唯一の仕組みでも
+ある。異なる関手に対して\code{fmap}をオーバーロードするためにこれが必要だ。ただし、1つの複雑さ
+がある：関手は型ではなく、型の写像、型コンストラクタとして定義される。\code{Eq}のように型の
+ファミリではなく、型コンストラクタのファミリである型クラスが必要だ。幸いなことに、Haskellの
+型クラスは型だけでなく型コンストラクタとも機能する。そのため、\code{Functor}クラスの定義は
+こうなる：
+
+\src{snippet13}
+これは、指定された型シグネチャを持つ関数\code{fmap}が存在する場合に\code{f}が\code{Functor}で
+あることを規定している。小文字の\code{f}は型変数で、型変数\code{a}や\code{b}に似ている。しかし
+コンパイラは、\code{f a}や\code{f b}のように他の型に作用するという使われ方を見て、それが型では
+なく型コンストラクタを表すことを推論できる。したがって、\code{Functor}のインスタンスを宣言する
+ときは、\code{Maybe}の場合のように型コンストラクタを渡さなければならない：
+
+\src{snippet14}
+ちなみに、\code{Functor}クラスと\code{Maybe}を含む多くの単純なデータ型のインスタンス定義は、
+標準のPreludeライブラリの一部だ。
+
+\subsection{C++における関手}
+
+C++で同じアプローチを試みることはできるか？型コンストラクタは\code{optional}のようなテンプレート
+クラスに対応するので、類比的に\code{fmap}を\newterm{テンプレートテンプレートパラメータ}\code{F}
+でパラメータ化する。その構文はこうなる：
+
+\begin{snip}{cpp}
+template<template<typename> F, typename A, typename B>
+F<B> fmap(std::function<B(A)>, F<A>);
+\end{snip}
+異なる関手に対してこのテンプレートを特殊化できるようにしたい。残念ながら、C++ではテンプレート
+関数の部分特殊化は禁止されている。次のように書くことはできない：
+
+\begin{snip}{cpp}
+template<typename A, typename B>
+optional<B> fmap<optional>(std::function<B(A)> f, optional<A> opt)
+\end{snip}
+代わりに、関数のオーバーロードに頼るしかなく、それはアンカリー化された\code{fmap}の元の定義に
+戻る：
+
+\begin{snip}{cpp}
+template<typename A, typename B>
+optional<B> fmap(std::function<B(A)> f, optional<A> opt) {
+    if (!opt.isValid())
+        return optional<B>{};
+    else
+        return optional<B>{ f(opt.val()) };
+}
+\end{snip}
+この定義は機能するが、\code{fmap}の2番目の引数がオーバーロードを選択するからに過ぎない。
+より汎用的な\code{fmap}の定義を完全に無視している。
+
+\subsection{リスト関手}
+
+プログラミングにおける関手の役割についての直感を養うために、さらなる例を見る必要がある。別の型に
+よってパラメータ化された任意の型が関手の候補だ。ジェネリックコンテナは格納する要素の型によって
+パラメータ化されているので、非常に単純なコンテナであるリストを見てみよう：
+
+\src{snippet15}
+型コンストラクタ\code{List}は任意の型\code{a}から型\code{List a}への写像だ。\code{List}が関手で
+あることを示すには、関数の持ち上げを定義しなければならない：関数\code{a -> b}が与えられれば、
+関数\code{List a -> List b}を定義する：
+
+\src{snippet16}
+\code{List a}に作用する関数は、2つのリストコンストラクタに対応する2つのケースを考慮しなければ
+ならない。\code{Nil}のケースは自明だ――\code{Nil}を返すだけ。空リストでできることはあまりない。
+\code{Cons}のケースは少し複雑で、再帰が関わる。少し立ち止まって、何をしようとしているかを考えよう。
+\code{a}のリスト、\code{a}を\code{b}に変える関数\code{f}があり、\code{b}のリストを生成したい。
+明らかなのは\code{f}を使ってリストの各要素を\code{a}から\code{b}に変えることだ。（空でない）リストが
+先頭と尻尾の\code{Cons}として定義されていることを考えると、実際にはどうするか？先頭に\code{f}を
+適用し、尻尾に持ち上げられた（\code{fmap}された）\code{f}を適用する。これは再帰的な定義だ。なぜなら
+持ち上げられた\code{f}を持ち上げられた\code{f}の観点で定義しているからだ：
+
+\src{snippet17}
+右辺では、\code{fmap f}が定義しようとしているリストより短いリスト――その尻尾――に適用されていることに
+注意しよう。より短いリストに向かって再帰するので、最終的に空リスト、つまり\code{Nil}に到達することが
+保証される。しかし先ほど決めたように、\code{Nil}に作用する\code{fmap f}は\code{Nil}を返し、
+再帰が終了する。最終結果を得るには、新しい先頭\code{(f x)}と新しい尻尾\code{(fmap f t)}を
+\code{Cons}コンストラクタを使って組み合わせる。まとめると、リスト関手のインスタンス宣言はこうなる：
+
+\src{snippet18}
+C++の方が馴染みがある場合は、最も汎用的なC++コンテナと考えられる\code{std::vector}の場合を
+考えてみよう。\code{std::vector}に対する\code{fmap}の実装は\code{std::transform}の薄いラッパーだ：
+
+\begin{snip}{cpp}
+template<typename A, typename B>
+std::vector<B> fmap(std::function<B(A)> f, std::vector<A> v) {
+    std::vector<B> w;
+    std::transform( std::begin(v)
+                  , std::end(v)
+                  , std::back_inserter(w)
+                  , f);
+    return w;
+}
+\end{snip}
+例えば、数列の要素を2乗するためにこれを使うことができる：
+
+\begin{snip}{cpp}
+std::vector<int> v{ 1, 2, 3, 4 };
+auto w = fmap([](int i) { return i*i; }, v);
+std::copy( std::begin(w)
+         , std::end(w)
+         , std::ostream_iterator(std::cout, ", "));
+\end{snip}
+ほとんどのC++コンテナは、\code{fmap}のより原始的なイトコである\code{std::transform}に渡せる
+イテレータを実装することで、関手的な性質を持つ。残念ながら、関手のシンプルさはイテレータと
+一時変数の通常の混乱の下で失われる（上記の\code{fmap}の実装を見てほしい）。新しく提案されている
+C++のrangeライブラリがrangeの関手的な性質をより際立たせることは喜ばしい。
+
+\subsection{Reader関手}
+
+ある程度の直感――例えば、関手が一種のコンテナであるという直感――を身につけたかもしれない。では、
+一見してまったく異なる例を見せよう。型\code{a}から\code{a}を返す関数の型への写像を考えよう。
+関数型についてまだ深くは話していない――完全な圏論的扱いはこれから来る――しかし、プログラマーとして
+ある程度の理解はある。Haskellでは、関数型は2つの型を取る矢印型コンストラクタ\code{(->)}を使って
+構築される：引数の型と結果の型だ。中置記法の\code{a -> b}は既に見てきたが、括弧で囲めば前置記法
+でも使える：
+
+\src{snippet19}
+通常の関数と同様に、2つ以上の引数を取る型関数は部分適用できる。矢印に1つの型引数だけを与えると、
+まだもう1つが必要になる。そのため：
+
+\src{snippet20}
+は型コンストラクタだ。完全な型\code{a -> b}を生成するにはもう1つの型\code{b}が必要だ。現状では、
+\code{a}でパラメータ化された型コンストラクタのファミリ全体を定義している。これがまた関手の
+ファミリかどうか見てみよう。2つの型パラメータを扱うと少し混乱するので、名前を変えよう。引数の型を
+\code{r}、結果の型を\code{a}と呼ぶことにする――前の関手の定義に合わせて。つまり、型コンストラクタは
+任意の型\code{a}を取り、型\code{r -> a}に写す。これが関手であることを示すには、関数\code{a -> b}を
+\code{r -> a}を取って\code{r -> b}を返す関数に持ち上げたい。これらは\code{a}と\code{b}それぞれに
+作用する型コンストラクタ\code{(->) r}を使って形成される型だ。このケースに適用された\code{fmap}の
+型シグネチャはこうなる：
+
+\src{snippet21}
+次のパズルを解かなければならない：関数\code{f :: a -> b}と関数\code{g :: r -> a}が与えられたとき、
+関数\code{r -> b}を作れ。2つの関数を合成する方法は1つしかなく、その結果がまさに必要なものだ。
+つまり、\code{fmap}の実装はこうなる：
+
+\src{snippet22}
+うまくいく！簡潔な記法が好きなら、合成を前置記法で書き直せることに気づくことで、この定義を
+さらに簡略化できる：
+
+\src{snippet23}
+引数を省略すれば、2つの関数の直接の等式が得られる：
+
+\src{snippet24}
+型コンストラクタ\code{(->) r}とこの\code{fmap}の実装の組み合わせをreader関手と呼ぶ。
+
+\section{コンテナとしての関手}
+
+汎用コンテナを定義するプログラミング言語における関手のいくつかの例を見てきた。または少なくとも、
+パラメータ化された型の何らかの値を含むオブジェクトを。reader関手は例外のように見える。なぜなら、
+関数をデータとして考えないからだ。しかし、純粋な関数はメモ化でき、関数の実行はテーブルルックアップ
+に変換できることを見た。テーブルはデータだ。逆に、Haskellの遅延評価のため、リストのような
+従来のコンテナは実際には関数として実装されるかもしれない。例えば、自然数の無限リストを考えると、
+これは簡潔に定義できる：
+
+\src{snippet25}
+最初の行では、角括弧のペアはリストに対するHaskellの組み込み型コンストラクタだ。2行目では、
+角括弧はリストリテラルを作成するために使われている。明らかに、このような無限リストはメモリに
+格納できない。コンパイラはこれを要求に応じて\code{Integer}を生成する関数として実装する。Haskellは
+データとコードの区別を効果的にぼかす。リストは関数と見なすことができ、関数は引数を結果に写す
+テーブルと見なすことができる。後者は、関数の定義域が有限で大きすぎない場合は実用的かもしれない。
+しかし、異なる文字列が無限にあるため、\code{strlen}をテーブルルックアップとして実装することは
+実用的ではないだろう。プログラマーとして、無限は好きではないが、圏論では無限を朝食として食べることを
+学ぶ。すべての文字列の集合であれ、過去・現在・未来の宇宙のすべての可能な状態の集まりであれ――
+扱うことができる！だから、エンドファンクタが生成する型のオブジェクトである関手オブジェクトを、
+それがパラメータ化された型の値を含む（あるいは複数の値を）と考えるのが好きだ。たとえそれらの値が
+物理的にそこにあるわけではなくても。関手の一例はC++の\code{std::future}で、ある時点で値を含む
+かもしれないが保証はない；アクセスしようとすると、別のスレッドが実行を完了するのを待ってブロック
+するかもしれない。別の例はHaskellの\code{IO}オブジェクトで、ユーザー入力を含むかもしれないし、
+モニターに「Hello World!」が表示された宇宙の将来バージョンを含むかもしれない。この解釈によれば、
+関手オブジェクトはパラメータ化された型の値または複数の値を含むかもしれないものだ。またはそれらの
+値を生成するためのレシピを含むかもしれない。値にアクセスできるかどうかはまったく気にしない――
+それは完全に任意であり、関手の範囲外だ。関数を使ってそれらの値を操作できることだけに関心がある。
+値にアクセスできる場合は、この操作の結果を見ることができるはずだ。できない場合は、操作が正しく
+合成されること、恒等関数による操作が何も変えないことだけを気にする。関手オブジェクトの内部の値に
+アクセスできることをどれほど気にしないかを示すために、その引数\code{a}を完全に無視する型コンストラクタ
+を示そう：
+
+\src{snippet26}
+\code{Const}型コンストラクタは\code{c}と\code{a}の2つの型を取る。矢印コンストラクタでやったように、
+部分適用して関手を作ろう。データコンストラクタ（\code{Const}とも呼ばれる）は型\code{c}の1つの値だけを
+取る。\code{a}への依存はない。この型コンストラクタに対する\code{fmap}の型はこうなる：
+
+\src{snippet27}
+関手が型引数を無視するため、\code{fmap}の実装は関数引数を自由に無視できる――関数が作用するものが
+何もないのだから：
+
+\src{snippet28}
+これはC++の方が少し明確かもしれない（こんなことを言うとは思わなかったが！）。C++では型引数――
+コンパイル時――と値――実行時――の区別が強い：
+
+\begin{snip}{cpp}
+template<typename C, typename A>
+struct Const {
+    Const(C v) : _v(v) {}
+    C _v;
+};
+\end{snip}
+C++の\code{fmap}の実装も関数引数を無視し、本質的に値を変えずに\code{Const}引数を再キャストする：
+
+\begin{snip}{cpp}
+template<typename C, typename A, typename B>
+Const<C, B> fmap(std::function<B(A)> f, Const<C, A> c) {
+    return Const<C, B>{c._v};
+}
+\end{snip}
+奇妙さにもかかわらず、\code{Const}関手は多くの構成において重要な役割を果たす。圏論では、先ほど
+述べた$\Delta_c$関手――ブラックホールの自己関手版――の特殊なケースだ。将来また見ることになる。
+
+\section{関手の合成}
+
+集合の間の関数が合成されるように、圏の間の関手が合成されることは容易に納得できる。2つの関手の
+合成は、対象に作用するとき、それぞれの対象写像の合成に過ぎない；射に作用するときも同様だ。
+2つの関手を経由した後、恒等射は恒等射として終わり、射の合成は射の合成として終わる。本当に大したこと
+はない。特に、自己関手の合成は簡単だ。関数\code{maybeTail}を覚えているか？Haskellの組み込みの
+リスト実装を使って書き直そう：
+
+\src{snippet29}
+（\code{Nil}と呼んでいた空リストコンストラクタは空の角括弧のペア\code{{[}{]}}に置き換えられる。
+\code{Cons}コンストラクタは中置演算子\code{:}（コロン）に置き換えられる。）\code{maybeTail}の結果は、
+\code{a}に作用する2つの関手\code{Maybe}と\code{{[}{]}}の合成である型だ。これらの関手それぞれが
+独自の\code{fmap}を持っているが、合成されたものの中身：\code{Maybe}リストに何らかの関数\code{f}を
+適用したい場合はどうすればよいか？2層の関手を突き破らなければならない。\code{fmap}を使って外側の
+\code{Maybe}を突き破ることができる。しかし、\code{f}はリストに作用しないので、\code{Maybe}の中に
+\code{f}を送ることはできない。内側のリストを操作するために\code{(fmap f)}を送らなければならない。
+例えば、整数の\code{Maybe}リストの要素を2乗する方法を見てみよう：
+
+\src{snippet30}
+コンパイラは型を分析した後、外側の\code{fmap}には\code{Maybe}インスタンスの実装を、内側には
+リスト関手の実装を使うべきだと判断する。上記のコードが次のように書き直せることはすぐには
+明らかでないかもしれない：
+
+\src{snippet31}
+しかし、\code{fmap}は1引数の関数として考えられることを思い出そう：
+
+\src{snippet32}
+この場合、\code{(fmap . fmap)}の2番目の\code{fmap}は引数として：
+
+\src{snippet33}
+を取り、型の関数を返す：
+
+\src{snippet34}
+最初の\code{fmap}はその関数を取り、関数を返す：
+
+\src{snippet35}
+最終的に、その関数が\code{mis}に適用される。つまり、2つの関手の合成は、対応する\code{fmap}の
+合成を\code{fmap}として持つ関手だ。圏論に戻ると：関手の合成が結合的であることは非常に明らかだ
+（対象の写像は結合的で、射の写像も結合的だ）。またすべての圏に自明な恒等関手がある：すべての対象を
+自身に写し、すべての射を自身に写す。よって、関手はある圏の射と同じ性質をすべて持つ。しかし、
+それはどんな圏だろうか？対象が圏で射が関手であるような圏でなければならない。それは圏の圏だ。しかし、
+\emph{すべて}の圏の圏はそれ自身を含まなければならず、すべての集合の集合を不可能にしたのと同じ
+種類のパラドックスに陥る。しかし、$\Cat$（大文字のC、小さな圏のなす圏）と呼ばれる、すべての
+\emph{小さな}圏の圏がある（これは大きいので、それ自身のメンバーにはなれない）。小さな圏とは、
+対象が集合をなすもので、集合より大きな何かではない。圏論では、無限非可算集合でさえ「小さい」と
+みなされることを覚えておこう。同じ構造が多くの抽象レベルで繰り返されていることに気づけることが
+とても驚くべきことだと思うので、これらのことを述べた。関手が圏をなすことは後で見ることになる。
+
+\section{課題}
+
+\begin{enumerate}
+  \tightlist
+  \item
+        両方の引数を無視して次のように定義することで、\code{Maybe}型コンストラクタを関手にできるか：
+
+        \begin{snip}{haskell}
+fmap _ _ = Nothing
+\end{snip}
+
+        （ヒント：関手則を確認せよ。）
+  \item
+        reader関手の関手則を証明せよ。ヒント：本当に単純だ。
+  \item
+        2番目に好きな言語（もちろん最初はHaskell）でreader関手を実装せよ。
+  \item
+        リスト関手の関手則を証明せよ。適用しようとしているリストの尻尾部分では則が成り立つと仮定せよ
+        （つまり、帰納法を使え）。
+\end{enumerate}
