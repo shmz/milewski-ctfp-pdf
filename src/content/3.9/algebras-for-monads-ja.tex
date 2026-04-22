@@ -1,0 +1,298 @@
+% !TEX root = ../../ctfp-print.tex
+
+\lettrine[lhang=0.17]{自}{己関手を式を定義する方法として解釈するなら}、代数はそれを評価し、モナドはそれを形成・操作する。代数とモナドを組み合わせることで、多くの機能が得られるだけでなく、いくつかの興味深い問いにも答えられる。
+
+そのような問いの一つは、モナドと随伴の関係に関するものだ。これまで見てきたように、すべての随伴は\hyperref[monads-categorically]{モナド}（およびコモナド）を定義する。問いはこうだ：すべてのモナド（コモナド）は随伴から導出できるだろうか？答えは肯定的だ。与えられたモナドを生成する随伴の族が全体として存在する。そのような随伴を二つ示そう。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.25\textwidth]{images/pigalg.png}
+\end{figure}
+
+\noindent
+定義を復習しよう。モナドは自己関手 $m$ に、いくつかの整合条件を満たす二つの自然変換を装備したものだ。これらの変換の $a$ における成分は：
+\begin{align*}
+  \eta_a & \Colon a \to m\ a         \\
+  \mu_a  & \Colon m\ (m\ a) \to m\ a
+\end{align*}
+同じ自己関手の代数は、特定の対象—担体 $a$—および射：
+\[\mathit{alg} \Colon m\ a \to a\]
+の選択だ。まず気づくことは、代数が $\eta_a$ と逆方向に進むことだ。直感的には、$\eta_a$ は型 $a$ の値から自明な式を作る。代数とモナドの整合性を保証する最初の整合条件は、担体が $a$ である代数を使ってこの式を評価すると、元の値が返ってくることだ：
+\[\mathit{alg} \circ \eta_a = \id_a\]
+二番目の条件は、二重にネストした式 $m\ (m\ a)$ を評価する方法が二つあるという事実から生じる。まず $\mu_a$ を適用して式を平坦化してから代数の評価器を使うことができる；あるいは、リフトした評価器を適用して内側の式を評価してから、その結果に評価器を適用することもできる。この二つの戦略が等価であってほしい：
+\[\mathit{alg} \circ \mu_a = \mathit{alg} \circ m\ \mathit{alg}\]
+ここで、$m\ \mathit{alg}$ は関手 $m$ を使って $\mathit{alg}$ をリフトした結果の射だ。以下の可換図式はこの二つの条件を示す（後で使う $T$ を先取りして $m$ を $T$ で置き換えた）：
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}
+    \centering
+    \begin{tikzcd}[column sep=large, row sep=large]
+      a \arrow[rd, equal] \arrow[r, "\eta_a"]
+      & Ta \arrow[d, "\mathit{alg}"] \\
+      & a
+    \end{tikzcd}
+  \end{subfigure}
+  \hspace{1cm}
+  \begin{subfigure}
+    \centering
+    \begin{tikzcd}[column sep=large, row sep=large]
+      T(Ta) \arrow[r, "T\ \mathit{alg}"] \arrow[d, "\mu_a"]
+      & Ta \arrow[d, "\mathit{alg}"] \\
+      Ta \arrow[r, "\mathit{alg}"]
+      & a
+    \end{tikzcd}
+  \end{subfigure}
+\end{figure}
+
+\noindent
+これらの条件を Haskell でも表現できる：
+
+\src{snippet01}
+小さな例を見てみよう。リスト自己関手の代数は、ある型 \code{a} と、\code{a} のリストから \code{a} を生成する関数からなる。要素型と累積型をともに \code{a} として選ぶことで、この関数を \code{foldr} を使って表現できるとしよう：
+
+\src{snippet02}
+この特定の代数は二引数の関数—これを \code{f} と呼ぼう—と値 \code{z} によって指定される。リスト関手はモナドでもあり、\code{return} は値を単一要素リストに変換する。ここでは \code{foldr f z} である代数と \code{return} の合成は、\code{x} を次のように写す：
+
+\src{snippet03}
+ここで \code{f} の作用は中置記法で書かれている。代数がモナドと整合的であるのは、すべての \code{x} に対して以下の整合条件が満たされるときだ：
+
+\src{snippet04}
+\code{f} を二項演算子として見ると、この条件は \code{z} が右単位元であることを意味する。
+
+二番目の整合条件はリストのリストに作用する。\code{join} の作用は個々のリストを連結する。その後、結果のリストを畳み込むことができる。一方で、まず個々のリストを畳み込み、その後結果のリストを畳み込むこともできる。再び、\code{f} を二項演算子として解釈すると、この条件はその二項演算が結合的であることを意味する。\code{(a, f, z)} がモノイドであれば、これらの条件は確かに満たされる。
+
+\section{$T$-代数}
+
+数学者はモナドを $T$ と呼ぶ慣習があるため、それと整合的な代数を\newterm{$T$-代数}（$T$-algebra）と呼ぶ。圏 $\cat{C}$ における与えられたモナド $T$ の $T$-代数は、\newterm{アイレンベルク-ムーア圏}（Eilenberg-Moore category）と呼ばれる圏を形成し、しばしば $\cat{C}^T$ と表記される。その圏における射は代数の準同型だ。これらは $F$-代数について定義したのと同じ準同型だ。
+
+$T$-代数は担体対象と評価器の組 $(a, f)$ だ。$\cat{C}^T$ から $\cat{C}$ への明白な\newterm{忘却関手}（forgetful functor）$U^T$ があり、$(a, f)$ を $a$ に写す。また $T$-代数の準同型を $\cat{C}$ における担体対象の間の対応する射に写す。随伴の議論で思い出したかもしれないが、忘却関手への左随伴は自由関手と呼ばれる。
+
+$U^T$ への左随伴は $F^T$ と呼ばれる。$\cat{C}$ における対象 $a$ を $\cat{C}^T$ における自由代数に写す。この自由代数の担体は $T a$ だ。その評価器は $T (T a)$ から $T a$ への射だ。$T$ はモナドなので、モナディックな $\mu_a$（Haskell では \code{join}）を評価器として使える。
+
+これが $T$-代数であることをまだ示す必要がある。そのために、二つの整合条件が満たされなければならない：
+\begin{align*}
+  \mathit{alg} & \circ \eta_{Ta} = \id_{Ta}     \\
+  \mathit{alg} & \circ \mu_a = \mathit{alg} \circ T\ \mathit{alg}
+\end{align*}
+しかし代数に $\mu$ を代入すれば、これらはモナド則に他ならない。
+
+思い出したかもしれないが、すべての随伴はモナドを定義する。$F^T$ と $U^T$ の間の随伴が、アイレンベルク-ムーア圏の構成に用いた元のモナド $T$ そのものを定義することがわかる。すべてのモナドに対してこの構成を実行できるので、すべてのモナドは随伴から生成できると結論づけられる。後で、同じモナドを生成する別の随伴があることを示そう。
+
+計画はこうだ：まず $F^T$ が確かに $U^T$ の左随伴であることを示す。そのために、この随伴の単位と余単位を定義し、対応する三角恒等式が満たされることを証明する。次に、この随伴から生成されるモナドが確かに元のモナドであることを示す。
+
+随伴の単位は自然変換：
+\[\eta \Colon I \to U^T \circ F^T\]
+だ。この変換の $a$ 成分を計算しよう。恒等関手は $a$ を与える。自由関手は自由代数 $(T a, \mu_a)$ を生成し、忘却関手はそれを $T a$ に簡約する。全体として、$a$ から $T a$ への写像を得る。モナド $T$ の単位をこの随伴の単位として使おう。
+
+余単位を見てみよう：
+\[\varepsilon \Colon F^T \circ U^T \to I\]
+ある $T$-代数 $(a, f)$ における成分を計算しよう。忘却関手は $f$ を忘れ、自由関手は組 $(T a, \mu_a)$ を生成する。したがって、$(a, f)$ における余単位 $\varepsilon$ の成分を定義するには、アイレンベルク-ムーア圏における適切な射、すなわち $T$-代数の準同型：
+\[(T a, \mu_a) \to (a, f)\]
+が必要だ。このような準同型は担体 $T a$ を $a$ に写すべきだ。忘れられた評価器 $f$ を復活させよう。今度は $T$-代数の準同型として使う。実際、$f$ を $T$-代数にする同じ可換図式は、それが $T$-代数の準同型であることを示すと再解釈できる：
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzcd}[column sep=large, row sep=large]
+    T(Ta) \arrow[r, "T f"] \arrow[d, "\mu_a"]
+    & Ta \arrow[d, "f"] \\
+    Ta \arrow[r, "f"]
+    & a
+  \end{tikzcd}
+\end{figure}
+
+\noindent
+このようにして、余単位自然変換 $\varepsilon$ の $(a, f)$（$T$-代数の圏における対象）における成分を $f$ として定義した。
+
+随伴を完成させるには、単位と余単位が三角恒等式を満たすことも示す必要がある。それらは：
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}
+    \centering
+    \begin{tikzcd}[column sep=large, row sep=large]
+      Ta \arrow[rd, equal] \arrow[r, "T \eta_a"]
+      & T(Ta) \arrow[d, "\mu_a"] \\
+      & Ta
+    \end{tikzcd}
+  \end{subfigure}%
+  \hspace{1cm}
+  \begin{subfigure}
+    \centering
+    \begin{tikzcd}[column sep=large, row sep=large]
+      a \arrow[rd, equal] \arrow[r, "\eta_a"]
+      & Ta \arrow[d, "f"] \\
+      & a
+    \end{tikzcd}
+  \end{subfigure}
+\end{figure}
+
+\noindent
+最初のものはモナド $T$ の単位律によって成り立つ。二番目は $T$-代数 $(a, f)$ の律に他ならない。
+
+二つの関手が随伴を形成することを確立した：
+\[F^T \dashv U^T\]
+すべての随伴はモナドを生み出す。往復
+\[U^T \circ F^T\]
+は対応するモナドを生み出す $\cat{C}$ の自己関手だ。対象 $a$ への作用を見てみよう。$F^T$ によって作られた自由代数は $(T a, \mu_a)$ だ。忘却関手 $U^T$ は評価器を落とす。したがって確かに：
+\[U^T \circ F^T = T\]
+期待通り、随伴の単位はモナド $T$ の単位だ。
+
+随伴の余単位が次の式を通じてモナディック乗法を生成することを思い出したかもしれない：
+\[\mu = R \circ \varepsilon \circ L\]
+これは三つの自然変換の水平合成であり、そのうち二つはそれぞれ $L$ を $L$ に、$R$ を $R$ に写す恒等自然変換だ。中間のもの、余単位は、代数 $(a, f)$ における成分が $f$ である自然変換だ。
+
+成分 $\mu_a$ を計算しよう。まず $\varepsilon$ を $F^T$ の後に水平合成すると、$F^T a$ における $\varepsilon$ の成分が得られる。$F^T$ は $a$ を代数 $(T a, \mu_a)$ に写し、$\varepsilon$ は評価器を選ぶので、$\mu_a$ が得られる。左側の $U^T$ との水平合成は何も変えない。なぜなら、射に対する $U^T$ の作用は自明だからだ。したがって確かに、随伴から得られた $\mu$ は元のモナド $T$ の $\mu$ と同じだ。
+
+\section{クライスリ圏}
+
+クライスリ圏は以前に見た。それは別の圏 $\cat{C}$ とモナド $T$ から構築される圏だ。この圏を $\cat{C}_T$ と呼ぼう。クライスリ圏 $\cat{C}_T$ における対象は $\cat{C}$ の対象だが、射は異なる。クライスリ圏における $a$ から $b$ への射 $f_{\cat{K}}$ は、元の圏における $a$ から $T b$ への射 $f$ に対応する。この射を $a$ から $b$ への\newterm{クライスリ矢}（Kleisli arrow）と呼ぶ。
+
+クライスリ圏における射の合成は、クライスリ矢のモナディック合成として定義される。例えば、$g_{\cat{K}}$ を $f_{\cat{K}}$ の後に合成しよう。クライスリ圏では：
+\begin{gather*}
+  f_{\cat{K}} \Colon a \to b \\
+  g_{\cat{K}} \Colon b \to c
+\end{gather*}
+これは圏 $\cat{C}$ では次に対応する：
+\begin{gather*}
+  f \Colon a \to T b \\
+  g \Colon b \to T c
+\end{gather*}
+合成を次のように定義する：
+\[h_{\cat{K}} = g_{\cat{K}} \circ f_{\cat{K}}\]
+$\cat{C}$ におけるクライスリ矢として：
+\begin{align*}
+  h & \Colon a \to T c          \\
+  h & = \mu \circ (T g) \circ f
+\end{align*}
+Haskell では次のように書く：
+
+\src{snippet05}
+$\cat{C}$ から $\cat{C}_T$ への関手 $F$ があり、対象に対しては自明に作用する。射に対しては、$\cat{C}$ における $f$ を、$f$ の戻り値を修飾するクライスリ矢を作ることで $\cat{C}_T$ における射に写す。射：
+\[f \Colon a \to b\]
+が与えられると、$\cat{C}_T$ における射を対応するクライスリ矢：
+\[\eta \circ f\]
+とともに作る。Haskell では次のように書く：
+
+\src{snippet06}
+また、$\cat{C}_T$ から $\cat{C}$ への関手 $G$ も定義できる。クライスリ圏からの対象 $a$ を $\cat{C}$ における対象 $T a$ に写す。クライスリ矢に対応する射 $f_{\cat{K}}$：
+\[f \Colon a \to T b\]
+に対する作用は、$\cat{C}$ における射：
+\[T a \to T b\]
+であり、まず $f$ をリフトしてから $\mu$ を適用することで得られる：
+\[\mu_{b} \circ T f\]
+Haskell 記法では次のようになる：
+
+\begin{snipv}
+G f\textsubscript{T} = join . fmap f
+\end{snipv}
+これは \code{join} を使ったモナディック束縛の定義として認識できるだろう。
+
+二つの関手が随伴を形成することは容易に見て取れる：
+\[F \dashv G\]
+そして、それらの合成 $G \circ F$ は元のモナド $T$ を再現する。
+
+これがつまり、同じモナドを生成する二番目の随伴だ。実際、$\cat{C}$ 上の同じモナド $T$ をもたらす随伴の圏 $\cat{Adj}(\cat{C}, T)$ 全体が存在する。今見たクライスリ随伴はこの圏における始対象であり、アイレンベルク-ムーア随伴は終対象だ。
+
+\section{コモナドの余代数}
+
+類似の構成は任意の\hyperref[comonads]{コモナド} $W$ に対しても行える。コモナドと整合的な\newterm{余代数}（coalgebra）の圏を定義できる。それらは次の図式を可換にする：
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}
+    \centering
+    \begin{tikzcd}[column sep=large, row sep=large]
+      a \arrow[rd, equal]
+      & Wa \arrow[l, "\varepsilon_a"'] \\
+      & a \arrow[u, "\mathit{coa}"']
+    \end{tikzcd}
+  \end{subfigure}%
+  \hspace{1cm}
+  \begin{subfigure}
+    \centering
+    \begin{tikzcd}[column sep=large, row sep=large]
+      W(Wa)
+      & Wa \arrow[l, "W\ \mathit{coa}"'] \\
+      Wa \arrow[u, "\delta_a"]
+      & a \arrow[u, "\mathit{coa}"] \arrow[l, "\mathit{coa}"']
+    \end{tikzcd}
+  \end{subfigure}
+\end{figure}
+
+\noindent
+ここで $\mathit{coa}$ は担体が $a$ の余代数の\newterm{余評価射}（coevaluation morphism）だ：
+\[\mathit{coa} \Colon a \to W a\]
+そして $\varepsilon$ と $\delta$ はコモナドを定義する二つの自然変換だ（Haskell では、それらの成分は \code{extract} と \code{duplicate} と呼ばれる）。
+
+これらの余代数の圏から $\cat{C}$ への明白な忘却関手 $U^W$ がある。それはただ余評価を忘れる。その右随伴 $F^W$ を考えよう：
+\[U^W \dashv F^W\]
+忘却関手への右随伴は\newterm{余自由関手}（cofree functor）と呼ばれる。$F^W$ は余自由余代数を生成する。$\cat{C}$ における対象 $a$ に余代数 $(W a, \delta_a)$ を割り当てる。随伴は元のコモナドを合成 $U^W \circ F^W$ として再現する。
+
+同様に、余クライスリ矢を持つ余クライスリ圏を構成し、対応する随伴からコモナドを再生成できる。
+
+\section{レンズ}
+
+レンズの議論に戻ろう。レンズは余代数として書ける：
+\[\mathit{coalg}_s \Colon a \to \mathit{Store}\ s\ a\]
+関手 $\mathit{Store}\ s$ に対して：
+
+\src{snippet07}
+この余代数は一対の関数としても表現できる：
+\begin{align*}
+  \mathit{set} & \Colon a \to s \to a \\
+  \mathit{get} & \Colon a \to s
+\end{align*}
+（$a$ を「全体」、$s$ をその「小さな」部分として考えよう。）この組を使うと：
+\[\mathit{coalg}_s\ a = \mathit{Store}\ (\mathit{set}\ a)\ (\mathit{get}\ a)\]
+ここで、$a$ は型 $a$ の値だ。部分適用した \code{set} が関数 $s \to a$ になることに注意。
+
+$\mathit{Store}\ s$ がコモナドであることも知っている：
+
+\src{snippet08}
+問いはこうだ：レンズがこのコモナドの余代数であるのはどのような条件のもとか？最初の整合条件：
+\[\varepsilon_a \circ \mathit{coalg} = \idarrow[a]\]
+は次のように変換される：
+
+\src{snippet16}
+これは、構造 $a$ のフィールドをその以前の値に設定しても何も変わらないという事実を表現するレンズ則だ。この律は GETPUT としても知られる。
+
+二番目の条件：
+\[\mathit{fmap}\ \mathit{coalg} \circ \mathit{coalg} = \delta_a \circ \mathit{coalg}\]
+はもう少し作業が必要だ。まず、\code{Store} 関手に対する \code{fmap} の定義を思い出そう：
+
+\src{snippet09}
+\code{coalg} の結果に \code{fmap coalg} を適用すると：
+
+\src{snippet10}
+一方で、\code{coalg} の結果に \code{duplicate} を適用すると：
+
+\src{snippet11}
+この二つの式が等しいためには、\code{Store} の下の二つの関数が任意の \code{s} に対して等しくなければならない：
+
+\src{snippet12}
+\code{coalg} を展開すると：
+
+\src{snippet13}
+これは残りの二つのレンズ則と等価だ。最初のもの：
+
+\src{snippet14}
+はフィールドの値を二度設定することが一度設定することと同じであることを伝える。この律は PUTPUT としても知られる。二番目の律：
+
+\src{snippet15}
+は $s$ に設定されたフィールドの値を取得すると $s$ が返ってくることを伝える。この律は PUTGET としても知られる。
+
+GETPUT と PUTGET を満たすレンズは\newterm{行儀の良いレンズ}（well-behaved lens）と呼ばれる。レンズがさらに PUTPUT も満たすならば、\newterm{非常に行儀の良いレンズ}（very well behaved lens）と呼ばれる。つまり言い換えると、非常に行儀の良いレンズは確かに \code{Store} 関手のコモナド余代数だ。
+
+\section{練習問題}
+
+\begin{enumerate}
+  \tightlist
+  \item
+        自由関手 $F^T \Colon C \to C^T$ の射に対する作用は何か。ヒント：モナディックな $\mu$ の自然性条件を使え。
+  \item
+        随伴を定義せよ：
+        \[U^W \dashv F^W\]
+  \item
+        上記の随伴が元のコモナドを再現することを証明せよ。
+\end{enumerate}

@@ -1,0 +1,9 @@
+本書は、Bartosz Mileswkiによる原文を\LaTeX{}形式に変換することで、\urlref{https://hmemcpy.com}{Igal Tabachnik}によって編纂されました。変換作業では、まず\urlref{https://mercury.postlight.com/web-parser/}{Mercury Web Parser}を用いてWordPressのブログ投稿をスクレイピングしてクリーンなHTMLコンテンツを取得し、\urlref{https://www.crummy.com/software/BeautifulSoup/}{Beautiful Soup}で修正・調整を施し、最後に\urlref{https://pandoc.org/}{Pandoc}で\LaTeX{}に変換しました。
+
+本文フォントにはPhilipp H. Poll作のLinux Libertineを、見出しフォントには同じくLinux Bioliumを使用しています。等幅フォントはRaph Levienが作成したInconsolataで、Dimosthenis KaponisとTakashi TanigawaによってInconsolata \acronym{LGC}として補完されています。表紙フォントはJuan Pablo del Peralがデザインした Alegreyaです。
+
+書籍の元のレイアウトデザインとタイポグラフィはAndres Rabaが担当しました。シンタックスハイライトには\urlref{https://github.com/hugomaiavieira/pygments-style-github}{Hugo Maia Vieira}によるPygmentsの``GitHub''スタイルを使用しています。
+\ifdefined\OPTCustomLanguage{%
+    \input{content/\OPTCustomLanguage/colophon}
+  }
+\fi

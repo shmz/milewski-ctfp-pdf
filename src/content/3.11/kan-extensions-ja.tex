@@ -1,0 +1,406 @@
+% !TEX root = ../../ctfp-print.tex
+
+\lettrine[lhang=0.17]{こ}{れまでは主に}単一の圏や二つの圏を扱ってきた。
+場合によっては、それが少々窮屈なこともあった。
+
+例えば、圏 $\cat{C}$ における極限を定義するとき、
+コーンの基底となるパターンのテンプレートとして添字圏 $\cat{I}$ を導入した。
+コーンの頂点のテンプレートとして、もう一つの圏——自明な圏——を導入するのが自然だっただろう。
+その代わりに、$\cat{I}$ から $\cat{C}$ への定値関手 $\Delta_c$ を使った。
+
+この不格好さを修正しよう。三つの圏を使って極限を定義する。
+添字圏 $\cat{I}$ から $\cat{C}$ への関手 $D$ から始めよう。
+これはコーンの基底——図式関手——を選ぶ関手だ。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan2.jpg}
+\end{figure}
+
+\noindent
+新たに加わるのは、単一の対象（と単一の恒等射）を含む圏 $\cat{1}$ だ。
+$\cat{I}$ からこの圏への関手 $K$ は唯一つしかない。
+$\cat{I}$ のすべての対象を $\cat{1}$ の唯一の対象に写し、
+すべての射を恒等射に写す。
+$\cat{1}$ から $\cat{C}$ への任意の関手 $F$ は、コーンの頂点の候補を選ぶ。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan15.jpg}
+\end{figure}
+
+\noindent
+コーンとは、$F \circ K$ から $D$ への自然変換 $\varepsilon$ だ。
+$F \circ K$ は元の $\Delta_c$ とまったく同じことをしている点に注意しよう。
+次の図はこの変換を示している。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan3-e1492120491591.jpg}
+\end{figure}
+
+\noindent
+今や、「最良の」関手 $F$ を選び出す普遍性を定義できる。
+この $F$ は $\cat{1}$ を $\cat{C}$ における $D$ の極限である対象に写し、
+$F \circ K$ から $D$ への自然変換 $\varepsilon$ が対応する射影を与える。
+この普遍関手を $D$ の $K$ に沿った\newterm{右カン拡張}（right Kan extension）と呼び、
+$\Ran_{K}D$ と表記する。
+
+普遍性を定式化しよう。別のコーン——すなわち別の関手 $F'$ と
+$F' \circ K$ から $D$ への自然変換 $\varepsilon'$——があるとする。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan31-e1492120512209.jpg}
+\end{figure}
+
+\noindent
+カン拡張 $F = Ran_{K}D$ が存在するならば、$F'$ からそれへの一意な自然変換
+$\sigma$ が存在し、$\varepsilon'$ が $\varepsilon$ を通じて因数分解される。すなわち：
+\[\varepsilon' = \varepsilon \cdot (\sigma \circ K)\]
+ここで $\sigma \circ K$ は二つの自然変換の水平合成だ
+（一方は $K$ 上の恒等自然変換）。この変換は $\varepsilon$ と垂直合成される。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan5.jpg}
+\end{figure}
+
+\noindent
+$\cat{I}$ の対象 $i$ に作用する成分では：
+\[\varepsilon'_i = \varepsilon_i \circ \sigma_{K i}\]
+この場合、$\sigma$ は $\cat{1}$ の唯一の対象に対応する成分を一つだけ持つ。
+つまり、これは $F'$ によって定義されるコーンの頂点から
+$\Ran_{K}D$ によって定義される普遍コーンの頂点への一意な射だ。
+可換条件は極限の定義が要求するものと正確に一致する。
+
+しかし重要なことに、自明な圏 $\cat{1}$ を任意の圏 $\cat{A}$ に置き換えても、
+右カン拡張の定義は有効なまま保たれる。
+
+\section{右カン拡張}
+
+関手 $K \Colon \cat{I} \to \cat{A}$ に沿った関手 $D \Colon \cat{I} \to \cat{C}$
+の右カン拡張とは、自然変換
+\[\varepsilon \Colon F \circ K \to D\]
+を伴う関手 $F \Colon \cat{A} \to \cat{C}$（$\Ran_{K}D$ と表記する）であり、
+他の任意の関手 $F' \Colon \cat{A} \to \cat{C}$ と自然変換
+\[\varepsilon' \Colon F' \circ K \to D\]
+に対して、$\varepsilon'$ を因数分解する一意な自然変換
+\[\sigma \Colon F' \to F\]
+が存在する：
+\[\varepsilon' = \varepsilon \cdot (\sigma \circ K)\]
+少々長くなったが、この図で視覚的に確認できる：
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan7.jpg}
+\end{figure}
+
+\noindent
+興味深い見方は、カン拡張がある意味で「関手の乗算」の逆として機能することだ。
+$\Ran_{K}D$ の代わりに $D/K$ という記法を使う著者もいる。
+実際、この記法では、右カン拡張の余単位とも呼ばれる $\varepsilon$ の定義が
+単純なキャンセルのように見える：
+\[\varepsilon \Colon D/K \circ K \to D\]
+カン拡張には別の解釈もある。関手 $K$ が圏 $\cat{I}$ を $\cat{A}$ の中に
+埋め込んでいると考えよう。最も単純な場合、$\cat{I}$ は $\cat{A}$ の部分圏に
+なるかもしれない。$\cat{I}$ を $\cat{C}$ に写す関手 $D$ があるとする。
+$D$ を $\cat{A}$ 全体で定義される関手 $F$ に拡張できるだろうか？
+理想的には、そのような拡張によって合成 $F \circ K$ が $D$ と同型になるべきだ。
+つまり、$F$ は $D$ の定義域を $\cat{A}$ に拡張することになる。
+しかし完全な同型を求めるのは通常無理な話で、その片道だけ、
+すなわち $F \circ K$ から $D$ への一方向の自然変換 $\varepsilon$ で十分だ。
+（左カン拡張は逆方向を選ぶ。）
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan6.jpg}
+\end{figure}
+
+\noindent
+もちろん、関手 $K$ が対象上で単射でなかったり、ホム集合上で忠実でなかったりする場合——
+極限の例のように——この埋め込みの描像は成立しない。その場合、カン拡張は
+失われた情報をできる限り外挿しようとする。
+
+\section{随伴としてのカン拡張}
+
+今度は、任意の $D$（と固定された $K$）に対して右カン拡張が存在するとしよう。
+その場合、$\Ran_{K}-$（$D$ をダッシュで置き換えたもの）は
+関手圏 ${[}\cat{I}, \cat{C}{]}$ から関手圏 ${[}\cat{A}, \cat{C}{]}$ への関手になる。
+この関手は前合成関手 $- \circ K$ の右随伴であることが分かる。
+後者は ${[}\cat{A}, \cat{C}{]}$ の関手を ${[}\cat{I}, \cat{C}{]}$ の関手に写す。
+随伴は次のように表される：
+\[[\cat{I}, \cat{C}](F' \circ K, D) \cong [\cat{A}, \cat{C}](F', \Ran_{K}D)\]
+これは、$\varepsilon'$ と呼んだすべての自然変換に $\sigma$ と呼んだ一意な自然変換が
+対応するという事実を言い換えたにすぎない。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan92.jpg}
+\end{figure}
+
+\noindent
+さらに、$\cat{I}$ を $\cat{C}$ と同じ圏に選べば、$D$ の代わりに
+恒等関手 $I_{\cat{C}}$ を代入できる。次の等式が得られる：
+\[[\cat{C}, \cat{C}](F' \circ K, I_{\cat{C}}) \cong [\cat{A}, \cat{C}](F', \Ran_{K}I_{\cat{C}})\]
+今度は $F'$ を $\Ran_{K}I_{\cat{C}}$ と同じものに選ぼう。
+すると右辺は恒等自然変換を含み、それに対応して左辺から次の自然変換が得られる：
+\[\varepsilon \Colon \Ran_{K}I_{\cat{C}} \circ K \to I_{\cat{C}}\]
+これは随伴の余単位によく似ている：
+\[\Ran_{K}I_{\cat{C}} \dashv K\]
+実際、恒等関手の $K$ に沿った右カン拡張を使って $K$ の左随伴を計算できる。
+そのためにはもう一つの条件が必要だ：右カン拡張が関手 $K$ によって保存されなければならない。
+拡張の保存とは、関手を $K$ と前合成してからカン拡張を計算した結果が、
+元のカン拡張を $K$ と前合成した結果と同じになることを意味する。
+この場合、条件は次のように簡略化される：
+\[K \circ \Ran_{K}I_{\cat{C}} \cong \Ran_{K}K\]
+$K$ による除算記法を使うと、随伴は次のように書ける：
+\[I/K \dashv K\]
+これにより随伴がある種の逆を記述するという直感が確認される。保存条件は：
+\[K \circ I/K \cong K/K\]
+関手の自身に沿った右カン拡張 $K/K$ は\newterm{余密度モナド}（codensity monad）と呼ばれる。
+
+随伴の公式は重要な結果だ。というのも、まもなく見るように、エンド（コエンド）を使って
+カン拡張を計算できるため、右（左）随伴を実際に求める手段が得られるからだ。
+
+\section{左カン拡張}
+
+双対的な構成によって左カン拡張が得られる。直感を養うために、
+余極限の定義から始めて、単元圏 $\cat{1}$ を使うように再構成しよう。
+関手 $D \Colon \cat{I} \to \cat{C}$ を使って基底を形成し、
+関手 $F \Colon \cat{1} \to \cat{C}$ で頂点を選ぶことで余コーンを構築する。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan81.jpg}
+\end{figure}
+
+\noindent
+余コーンの側面——入射——は、$D$ から $F \circ K$ への自然変換 $\eta$ の成分だ。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan10a.jpg}
+\end{figure}
+
+\noindent
+余極限は普遍余コーンだ。したがって、他の任意の関手 $F'$ と自然変換
+\[\eta' \Colon D \to F' \circ K\]
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan10b.jpg}
+\end{figure}
+
+\noindent
+に対して、$F$ から $F'$ への一意な自然変換 $\sigma$ が存在し、
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan14.jpg}
+\end{figure}
+
+\noindent
+次を満たす：
+\[\eta' = (\sigma \circ K) \cdot \eta\]
+これを次の図で示す：
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan112.jpg}
+\end{figure}
+
+\noindent
+単元圏 $\cat{1}$ を $\cat{A}$ に置き換えると、この定義は自然に
+\newterm{左カン拡張}（left Kan extension）の定義へと一般化される。$\Lan_{K}D$ と表記する。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan12.jpg}
+\end{figure}
+
+\noindent
+自然変換：
+\[\eta \Colon D \to \Lan_{K}D \circ K\]
+は左カン拡張の\newterm{単位}（unit）と呼ばれる。
+
+前と同様に、自然変換間の一対一対応：
+\[\eta' = (\sigma \circ K) \cdot \eta\]
+を随伴の形式に書き換えられる：
+\[[\cat{A}, \cat{C}](\Lan_{K}D, F') \cong [\cat{I}, \cat{C}](D, F' \circ K)\]
+つまり、左カン拡張は $K$ との前合成の左随伴であり、
+右カン拡張は右随伴だ。
+
+恒等関手の右カン拡張が $K$ の左随伴を計算するために使えたのと同様に、
+恒等関手の左カン拡張は $K$ の右随伴であることが分かる
+（$\eta$ が随伴の単位となる）：
+\[K \dashv \Lan_{K}I_{\cat{C}}\]
+二つの結果を組み合わせると：
+\[\Ran_{K}I_{\cat{C}} \dashv K \dashv \Lan_{K}I_{\cat{C}}\]
+
+\section{エンドとしてのカン拡張}
+
+カン拡張の真の力は、エンド（とコエンド）を使って計算できるという事実から来る。
+簡単のため、目標圏 $\cat{C}$ が $\Set$ である場合に限定するが、
+公式は任意の圏に拡張できる。
+
+カン拡張が関手の作用を元の定義域の外に拡張するために使えるというアイデアを
+振り返ろう。$K$ が $\cat{I}$ を $\cat{A}$ の中に埋め込んでいるとする。
+関手 $D$ は $\cat{I}$ を $\Set$ に写す。
+$K$ の像にある対象 $a$、すなわち $a = K i$ に対しては、
+拡張された関手が $a$ を $D i$ に写すと言えばよい。
+問題は、$K$ の像の外にある $\cat{A}$ の対象をどう扱うかだ。
+そのような対象はそれぞれ、$K$ の像の各対象に向かう多数の射を通じて
+潜在的に繋がっている。関手はこれらの射を保存しなければならない。
+対象 $a$ から $K$ の像への射の全体は、ホム関手によって特徴付けられる：
+\[\cat{A}(a, K -)\]
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/kan13.jpg}
+\end{figure}
+
+\noindent
+このホム関手は二つの関手の合成であることに注意しよう：
+\[\cat{A}(a, K -) = \cat{A}(a, -) \circ K\]
+右カン拡張は関手合成の右随伴だ：
+\[[\cat{I}, \Set](F' \circ K, D) \cong [\cat{A}, \Set](F', \Ran_{K}D)\]
+$F'$ をホム関手に置き換えるとどうなるか見てみよう：
+\[[\cat{I}, \Set](\cat{A}(a, -) \circ K, D) \cong [\cat{A}, \Set](\cat{A}(a, -), \Ran_{K}D)\]
+合成をインライン展開すると：
+\[[\cat{I}, \Set](\cat{A}(a, K -), D) \cong [\cat{A}, \Set](\cat{A}(a, -), \Ran_{K}D)\]
+右辺は米田の補題を使って簡約できる：
+\[[\cat{I}, \Set](\cat{A}(a, K -), D) \cong \Ran_{K}D a\]
+自然変換の集合をエンドとして書き直せば、右カン拡張のこの非常に便利な公式が得られる：
+\[\Ran_{K}D a \cong \int_i \Set(\cat{A}(a, K i), D i)\]
+左カン拡張にはコエンドを使った類似の公式がある：
+\[\Lan_{K}D a = \int^i \cat{A}(K i, a)\times{}D i\]
+これが成立することを示すため、関手合成への左随伴であることを確認しよう：
+\[[\cat{A}, \Set](\Lan_{K}D, F') \cong [\cat{I}, \Set](D, F' \circ K)\]
+左辺に公式を代入する：
+\[[\cat{A}, \Set](\int^i \cat{A}(K i, -)\times{}D i, F')\]
+これは自然変換の集合なので、エンドとして書き直せる：
+\[\int_a \Set(\int^i \cat{A}(K i, a)\times{}D i, F' a)\]
+ホム関手の連続性を使って、コエンドをエンドに置き換えられる：
+\[\int_a \int_i \Set(\cat{A}(K i, a)\times{}D i, F' a)\]
+積と指数の随伴を使うと：
+\[\int_a \int_i \Set(\cat{A}(K i, a),\ (F' a)^{D i})\]
+指数は対応するホム集合と同型だ：
+\[\int_a \int_i \Set(\cat{A}(K i, a),\ \Set(D i, F' a))\]
+フビニの定理と呼ばれる定理を使えば、二つのエンドを入れ替えられる：
+\[\int_i \int_a \Set(\cat{A}(K i, a),\ \Set(D i, F' a))\]
+内側のエンドは二つの関手間の自然変換の集合を表すので、米田の補題を適用できる：
+\[\int_i \Set(D i, F' (K i))\]
+これはまさに証明しようとした随伴の右辺をなす自然変換の集合だ：
+\[[\cat{I}, \Set](D, F' \circ K)\]
+エンド、コエンド、米田の補題を使ったこの種の計算は、エンドの「微積分」では
+典型的なものだ。
+
+\section{HaskellにおけるKan拡張}
+
+カン拡張のエンド/コエンド公式はHaskellに容易に翻訳できる。
+右拡張から始めよう：
+\[\Ran_{K}D a \cong \int_i \Set(\cat{A}(a, K i), D i)\]
+エンドを全称量化子に、ホム集合を関数型に置き換える：
+
+\src{snippet01}
+この定義を見ると、\code{Ran} は関数を適用できる型 \code{a} の値と、
+二つの関手 \code{k} と \code{d} の間の自然変換を含まなければならないことが明らかだ。
+例えば、\code{k} が木関手で \code{d} がリスト関手であり、
+\code{Ran Tree {[}{]} String} が与えられたとしよう。関数：
+
+\src{snippet02}
+を渡すと \code{Int} のリストが返ってくる、といった具合だ。右カン拡張は
+この関数を使って木を生成し、それをリストに詰め替える。
+例えば、文字列から構文解析木を生成するパーサーを渡すと、
+その木の深さ優先探索に対応するリストが得られる。
+
+右カン拡張は、関手 \code{d} を恒等関手に置き換えることで、
+与えられた関手の左随伴を計算するために使える。
+これにより、関手 \code{k} の左随伴が次の型の多相関数の集合として表される：
+
+\src{snippet03}
+\code{k} がモノイドの圏からの忘却関手だとしよう。全称量化子はすべてのモノイドを渡る。
+もちろんHaskellではモノイド則を表現できないが、次のコードは
+結果として得られる自由関手（忘却関手 \code{k} は対象上で恒等写像）の
+適切な近似だ：
+
+\src{snippet04}
+予想通り、自由モノイド——HaskellのリストをHaskellリストとして生成する：
+
+\src{snippet05}
+左カン拡張はコエンドだ：
+\[\Lan_{K}D a = \int^i \cat{A}(K i, a)\times{}D i\]
+つまり、存在量化子に翻訳される。記号的には：
+
+\begin{snip}{haskell}
+Lan k d a = exists i. (k i -> a, d i)
+\end{snip}
+これは\acronym{GADT}を使うか、全称量化データコンストラクタを使ってHaskellで符号化できる：
+
+\src{snippet06}
+このデータ構造の解釈は、何らかの不特定の \code{i} のコンテナを受け取り
+\code{a} を生成する関数を含んでいるということだ。その \code{i} のコンテナも持っている。
+\code{i} が何であるか分からないので、このデータ構造でできることは、
+\code{i} のコンテナを取り出し、自然変換を使って関手 \code{k} が定義するコンテナに
+詰め替え、関数を呼び出して \code{a} を得ることだけだ。
+例えば、\code{d} が木で \code{k} がリストなら、木をシリアライズし、
+結果のリストで関数を呼び出して \code{a} を得られる。
+
+左カン拡張は関手の右随伴を計算するために使える。
+積関手の右随伴が指数であることを知っているので、カン拡張を使って実装してみよう：
+
+\src{snippet07}
+実際にこれは関数型と同型であり、次の関数の対がそれを証明している：
+
+\src{snippet08}
+一般的な場合の説明と同様に、次のステップを実行したことに注意しよう：
+
+\begin{enumerate}
+  \tightlist
+  \item
+        \code{x} のコンテナ（ここでは単なる自明な恒等コンテナ）と関数 \code{f} を取り出す。
+  \item
+        恒等関手と対関手の間の自然変換を使ってコンテナを詰め替える。
+  \item
+        関数 \code{f} を呼び出す。
+\end{enumerate}
+
+\section{自由関手}
+
+カン拡張の興味深い応用として、自由関手の構成がある。
+これは次の実践的な問題の解だ：型コンストラクタ——つまり対象の写像——があるとする。
+この型コンストラクタに基づく関手を定義できるだろうか？
+言い換えると、この型コンストラクタを本格的な自己関手に拡張するような
+射の写像を定義できるだろうか？
+
+鍵となる観察は、型コンストラクタが離散圏を定義域とする関手として記述できることだ。
+離散圏には恒等射以外の射がない。圏 $\cat{C}$ が与えられると、
+恒等射でないすべての射を捨てることで離散圏 $\cat{|C|}$ を常に構成できる。
+$\cat{|C|}$ から $\cat{C}$ への関手 $F$ は単なる対象の写像、
+つまりHaskellで型コンストラクタと呼ぶものだ。
+また、$\cat{|C|}$ を $\cat{C}$ に埋め込む標準的な関手 $J$ もある：
+対象上（と恒等射上）で恒等写像だ。
+$J$ に沿った $F$ の左カン拡張が存在すれば、
+それは $\cat{C}$ から $\cat{C}$ への関手だ：
+\[\Lan_{J}F a = \int^i \cat{C}(J i, a)\times{}F i\]
+これを $F$ に基づく\newterm{自由関手}（free functor）と呼ぶ。
+
+Haskellでは次のように書く：
+
+\src{snippet09}
+実際、任意の型コンストラクタ \code{f} に対して \code{FreeF f} は関手だ：
+
+\src{snippet10}
+見て分かるように、自由関手は関数とその引数の両方を記録することで
+関数のリフトを偽装する。リフトされた関数をその合成を記録することで蓄積する。
+関手則は自動的に満たされる。この構成は論文
+\urlref{http://okmij.org/ftp/Haskell/extensible/more.pdf}{Freer Monads,
+  More Extensible Effects}で使用された。
+
+あるいは、同じ目的で右カン拡張を使うこともできる：
+
+\src{snippet11}
+これが確かに関手であることは容易に確認できる：
+
+\src{snippet12}

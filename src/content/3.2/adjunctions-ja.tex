@@ -1,0 +1,316 @@
+% !TEX root = ../../ctfp-print.tex
+
+\lettrine[lhang=0.17]{数}{学では、あるものが別のものに似ているということを表す}様々な方法がある。最も厳密なのは\newterm{等しさ}（equality）だ。二つのものが等しいとは、どんな方法によっても区別できない場合に言う。一方を他方のあらゆる文脈で代入することができる。たとえば、可換図式について話すたびに射の等しさを使っていたことに気づいただろうか？これは射が集合（hom集合）を形成し、集合の要素は等しさで比較できるからだ。
+
+しかし、等しさはしばしば強すぎる。実際上は同じであるが、厳密には等しくない例が多くある。たとえば、ペア型\code{(Bool, Char)}は\code{(Char, Bool)}と厳密には等しくないが、同じ情報を含んでいることは理解できる。この概念は、二つの型の間の\newterm{同型}（isomorphism）、つまり可逆な射によって最もよく捉えられる。それが射であるため、構造を保存する。そして「iso」であるとは、どちら側から始めても同じ場所に戻る往復旅行の一部であることを意味する。ペアの場合、この同型は\code{swap}と呼ばれる：
+
+\src{snippet01}
+\code{swap}はたまたま自分自身の逆だ。
+
+\section{随伴と単位/余単位のペア}
+
+圏が同型であるということを話す場合、圏間の写像、すなわち関手の観点で表現する。二つの圏$\cat{C}$と$\cat{D}$が同型であるとは、$\cat{C}$から$\cat{D}$への可逆な関手$R$（「右」）が存在する、つまり$\cat{D}$から$\cat{C}$に戻る別の関手$L$（「左」）が存在して、$R$と合成すると恒等関手$I$と等しくなる場合に言えるだろう。可能な合成は$R \circ L$と$L \circ R$の二つで、恒等関手も$\cat{C}$の一つと$\cat{D}$の一つの二つがある。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/adj-1.jpg}
+\end{figure}
+
+\noindent
+しかし、難しい部分がある：二つの関手が\emph{等しい}とはどういう意味か？この等しさ：
+\[R \circ L = I_{\cat{D}}\]
+あるいは：
+\[L \circ R = I_{\cat{C}}\]
+で何を意味するのか？
+
+関手の等しさを対象の等しさで定義することは合理的だろう。二つの関手は、等しい対象に作用するとき、等しい対象を生成すべきだ。しかし、一般的な圏では対象の等しさという概念がない。それは定義の一部ではないのだ。（「等しさとは何か」というウサギの穴を深く掘り進めると、ホモトピー型理論にたどり着く。）
+
+関手は圏の圏における射であるから、等しさで比較できるはずだと主張するかもしれない。確かに、対象が集合を形成する小さい圏について話す限り、集合の要素の等しさを使って対象を比較することはできる。
+
+しかし、$\Cat$は実際には$\cat{2}$-圏であることを思い出してほしい。$\cat{2}$-圏のhom集合は追加の構造を持っている。$1$-射の間に作用する$2$-射がある。$\Cat$では、$1$-射は関手で、$2$-射は自然変換だ。したがって、関手について話すとき、等しさの代替として自然同型を考えることがより自然だ（このダジャレは避けられない！）。
+
+そのため、圏の同型の代わりに、より一般的な\newterm{同値}（equivalence）という概念を考えることが理にかなっている。二つの圏$\cat{C}$と$\cat{D}$が\emph{同値}とは、それらの間を行き来する二つの関手が見つかり、その合成（どちらの方向でも）が恒等関手と\newterm{自然同型}（naturally isomorphic）である場合に言う。言い換えれば、合成$R \circ L$と恒等関手$I_{\cat{D}}$の間、および$L \circ R$と恒等関手$I_{\cat{C}}$の間に双方向の自然変換が存在する。
+
+随伴は同値よりもさらに弱い。なぜなら、二つの関手の合成が恒等関手と\emph{同型}である必要がないからだ。代わりに、$I_{\cat{D}}$から$R \circ L$への\newterm{一方向}（one way）の自然変換と、$L \circ R$から$I_{\cat{C}}$への別の自然変換の存在を規定する。これら二つの自然変換のシグネチャは次のとおりだ：
+\begin{gather*}
+  \eta \Colon I_{\cat{D}} \to R \circ L \\
+  \varepsilon \Colon L \circ R \to I_{\cat{C}}
+\end{gather*}
+$\eta$は随伴の\newterm{単位}（unit）、$\varepsilon$は\newterm{余単位}（counit）と呼ばれる。
+
+この二つの定義の非対称性に注意してほしい。一般に、残りの二つの写像は存在しない：
+\begin{gather*}
+  R \circ L \to I_{\cat{D}} \quad\quad\text{（必ずしも存在しない）} \\
+  I_{\cat{C}} \to L \circ R \quad\quad\text{（必ずしも存在しない）}
+\end{gather*}
+この非対称性のため、関手$L$は関手$R$の\newterm{左随伴}（left adjoint）と呼ばれ、関手$R$は$L$の\newterm{右随伴}（right adjoint）と呼ばれる。（もちろん、左と右は図式を特定の方向に描く場合にのみ意味を持つ。）
+
+随伴の簡潔な表記は：
+\[L \dashv R\]
+随伴をよりよく理解するために、単位と余単位をより詳しく分析しよう。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/adj-unit.jpg}
+\end{figure}
+
+\noindent
+単位から始めよう。自然変換であるため、射の族だ。$\cat{D}$の対象$d$に対して、$\eta$の成分は$Id$（これは$d$に等しい）と$(R \circ L) d$（図では$d'$と呼ばれる）の間の射だ：
+\[\eta_d \Colon d \to (R \circ L) d\]
+合成$R \circ L$は$\cat{D}$の自己関手であることに注意しよう。
+
+この方程式は、$\cat{D}$の任意の対象$d$を出発点として選び、往復関手$R \circ L$を使ってターゲット対象$d'$を選べることを示している。そして矢印、すなわち射$\eta_d$をターゲットに向けて射る。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/adj-counit.jpg}
+\end{figure}
+
+\noindent
+同様に、余単位$\varepsilon$の成分は次のように記述できる：
+\[\varepsilon_{c} \Colon (L \circ R) c \to c\]
+これは$\cat{C}$の任意の対象$c$をターゲットとして選び、往復関手$L \circ R$を使ってソース$c' = (L \circ R) c$を選べることを示している。そして矢印、すなわち射$\varepsilon_{c}$をソースからターゲットに向けて射る。
+
+単位と余単位を別の角度から見ると、単位は$\cat{D}$の恒等関手を挿入できる場所ならどこでも合成$R \circ L$を\emph{導入}でき、余単位は合成$L \circ R$を\emph{除去}して$\cat{C}$の恒等で置き換えることができる。これにより「自明な」一貫性条件が生まれ、導入に続いて除去しても何も変わらないことが保証される：
+\begin{gather*}
+  L = L \circ I_{\cat{D}} \to L \circ R \circ L \to I_{\cat{C}} \circ L = L \\
+  R = I_{\cat{D}} \circ R \to R \circ L \circ R \to R \circ I_{\cat{C}} = R
+\end{gather*}
+これらは以下の図式を可換にするため、\newterm{三角恒等式}（triangular identities）と呼ばれる：
+
+\begin{figure}[H]
+  \centering
+
+  \begin{subfigure}
+    \centering
+    \begin{tikzcd}[column sep=large, row sep=large]
+      L \arrow[rd, equal] \arrow[r, "L \circ \eta"]
+      & L \circ R \circ L \arrow[d, "\varepsilon \circ L"] \\
+      & L
+    \end{tikzcd}
+  \end{subfigure}%
+  \hspace{1cm}
+  \begin{subfigure}
+    \centering
+    \begin{tikzcd}[column sep=large, row sep=large]
+      R \arrow[rd, equal] \arrow[r, "\eta \circ R"]
+      & R \circ L \circ R \arrow[d, "R \circ \varepsilon"] \\
+      & R
+    \end{tikzcd}
+  \end{subfigure}
+\end{figure}
+
+\noindent
+これらは関手圏における図式で、矢印は自然変換であり、その合成は自然変換の水平合成だ。成分では、これらの恒等式は次のようになる：
+\begin{gather*}
+  \varepsilon_{L d} \circ L \eta_d = \id_{L d} \\
+  R \varepsilon_{c} \circ \eta_{R c} = \id_{R c}
+\end{gather*}
+単位と余単位はHaskellでは異なる名前で見られることが多い。単位は\code{return}（または\code{Applicative}の定義では\code{pure}）として知られている：
+
+\src{snippet02}
+余単位は\code{extract}として知られている：
+
+\src{snippet03}
+ここで、\code{m}は$R \circ L$に対応する（自己）関手で、\code{w}は$L \circ R$に対応する（自己）関手だ。後で見るように、それぞれモナドと余モナドの定義の一部をなす。
+
+自己関手をコンテナと考えると、単位（または\code{return}）は任意の型の値の周りにデフォルトのボックスを作る多相関数だ。余単位（または\code{extract}）は逆のことをする：コンテナから単一の値を取り出すか生成する。
+
+後で見るように、随伴関手の対はすべてモナドと余モナドを定義する。逆に、すべてのモナドまたは余モナドは随伴関手の対に因数分解できる。ただし、この因数分解は一意ではない。
+
+Haskellではモナドを多く使うが、随伴関手の対に因数分解することはほとんどない。主な理由は、そのような関手が通常$\Hask$の外に連れ出してしまうからだ。
+
+しかし、Haskellで\newterm{自己関手}（endofunctors）の随伴を定義することはできる。\code{Data.Functor.Adjunction}から取った定義の一部を示す：
+
+\src{snippet04}
+この定義にはいくつかの説明が必要だ。まず第一に、これは多パラメータ型クラスを記述している。二つのパラメータは\code{f}と\code{u}だ。これらの二つの型コンストラクタの間に\code{Adjunction}と呼ばれる関係を確立する。
+
+縦棒の後の追加条件は関数従属性（functional dependencies）を指定する。たとえば、\code{f -> u}は\code{u}が\code{f}によって決まることを意味する（\code{f}と\code{u}の関係は関数、ここでは型コンストラクタ上の関数だ）。逆に、\code{u -> f}は\code{u}がわかれば\code{f}が一意に決まることを意味する。
+
+Haskellで右随伴\code{u}が\newterm{表現可能}（representable）関手であるという条件を課せる理由については後で説明する。
+
+\section{随伴とhom集合}
+
+hom集合の自然同型による随伴の同値な定義がある。この定義は、これまで学んできた普遍的構成とうまく結びつく。ある構成を因数分解する唯一の射が存在するという文を聞くたびに、それをある集合からhom集合への写像として考えるべきだ。それが「唯一の射を選ぶ」という意味だ。
+
+さらに、因数分解はしばしば自然変換の観点で記述できる。因数分解は可換図式を含み、ある射が二つの射（因数）の合成と等しい。自然変換は射を可換図式に写す。したがって、普遍的構成では、射から可換図式、そして唯一の射へと進む。最終的に、射から射への写像、またはあるhom集合から別のhom集合（通常は異なる圏の）への写像が得られる。この写像が可逆で、すべてのhom集合にわたって自然に拡張できる場合、随伴が得られる。
+
+普遍的構成と随伴の主な違いは、後者がグローバルに、すべてのhom集合について定義されていることだ。たとえば、普遍的構成を使えば、その圏の他の対象のペアには存在しなくても、特定の二つの対象の積を定義できる。後で見るように、ある圏で\emph{任意のペア}の対象の積が存在する場合、随伴を通じても定義できる。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/adj-homsets.jpg}
+\end{figure}
+
+\noindent
+hom集合を使った随伴の代替定義を示す。前と同様に、二つの関手$L \Colon \cat{D} \to \cat{C}$と$R \Colon \cat{C} \to \cat{D}$がある。二つの任意の対象を選ぶ：$\cat{D}$のソース対象$d$と$\cat{C}$のターゲット対象$c$だ。$L$を使ってソース対象$d$を$\cat{C}$に写せる。これで$\cat{C}$に二つの対象$L d$と$c$がある。これらはhom集合を定義する：
+\[\cat{C}(L d, c)\]
+同様に、$R$を使ってターゲット対象$c$を写せる。これで$\cat{D}$に二つの対象$d$と$R c$がある。これらもhom集合を定義する：
+\[\cat{D}(d, R c)\]
+$L$が$R$の左随伴とは、hom集合の同型：
+\[\cat{C}(L d, c) \cong \cat{D}(d, R c)\]
+が$d$と$c$の両方について自然に成立する場合に言う。
+自然性は、ソース$d$が$\cat{D}$にわたって滑らかに変化でき、ターゲット$c$が$\cat{C}$にわたって変化できることを意味する。より正確には、$\cat{C}$から$\Set$への次の二つの（共変）関手の間の自然変換$\varphi$がある。これらの関手の対象への作用は：
+\begin{gather*}
+  c \to \cat{C}(L d, c) \\
+  c \to \cat{D}(d, R c)
+\end{gather*}
+もう一つの自然変換$\psi$は次の（反変）関手の間に作用する：
+\begin{gather*}
+  d \to \cat{C}(L d, c) \\
+  d \to \cat{D}(d, R c)
+\end{gather*}
+両方の自然変換は可逆でなければならない。
+
+随伴の二つの定義が同値であることは容易に示せる。たとえば、hom集合の同型：
+\[\cat{C}(L d, c) \cong \cat{D}(d, R c)\]
+から始めて単位変換を導こう。この同型は任意の対象$c$に対して成立するから、$c = L d$の場合にも成立しなければならない：
+\[\cat{C}(L d, L d) \cong \cat{D}(d, (R \circ L) d)\]
+左辺には少なくとも一つの射、恒等射が含まれていることがわかる。自然変換はこの射を$\cat{D}(d, (R \circ L) d)$の要素、つまり恒等関手$I$を挿入すると次の射に写す：
+\[\cat{D}(I d, (R \circ L) d)\]
+$d$によってパラメータ化された射の族が得られる。これらは関手$I$と関手$R \circ L$の間の自然変換を形成する（自然性条件は容易に検証できる）。これがまさに単位$\eta$だ。
+
+逆に、単位と余単位の存在から出発して、hom集合間の変換を定義できる。たとえば、hom集合$\cat{C}(L d, c)$の任意の射$f$を選ぼう。$f$に作用して$\cat{D}(d, R c)$の射を生成する$\varphi$を定義したい。
+
+実際、選択肢はほとんどない。試せることの一つは、$R$を使って$f$を持ち上げることだ。これにより$R (L d)$から$R c$への射$R f$、つまり$\cat{D}((R \circ L) d, R c)$の要素の射が得られる。
+
+$\varphi$の成分として必要なのは$d$から$R c$への射だ。$\eta_d$の成分を使って$d$から$(R \circ L) d$に到達できるので問題ない。次が得られる：
+\[\varphi_f = R f \circ \eta_d\]
+他の方向は類似しており、$\psi$の導出も同様だ。
+
+\code{Adjunction}のHaskell定義に戻ると、自然変換$\varphi$と$\psi$は\code{a}と\code{b}について多相的な関数\code{leftAdjunct}と\code{rightAdjunct}にそれぞれ置き換えられる。関手$L$と$R$は\code{f}と\code{u}と呼ばれる：
+
+\src{snippet05}
+\code{unit}/\code{counit}定式化と\code{leftAdjunct}/\allowbreak\code{rightAdjunct}定式化の同値性は、これらの写像によって示される：
+
+\src{snippet06}
+随伴の圏論的記述からHaskellコードへの翻訳を追うことは非常に教育的だ。ぜひ練習としてやってみることを勧める。
+
+Haskellで右随伴が自動的に\hyperref[representable-functors]{表現可能関手}（representable functor）である理由を説明する準備ができた。その理由は、第一近似としてHaskell型の圏を集合の圏として扱えるからだ。
+
+右の圏$\cat{D}$が$\Set$の場合、右随伴$R$は$\cat{C}$から$\Set$への関手だ。このような関手は、hom関手$\cat{C}(\mathit{rep}, \_)$が$R$と自然同型となる対象$\mathit{rep}$が$\cat{C}$に見つかる場合に表現可能だ。実は、$R$が$\Set$から$\cat{C}$への何らかの関手$L$の右随伴である場合、そのような対象は常に存在する。それは単元集合$()$の$L$による像だ：
+\[\mathit{rep} = L ()\]
+実際、随伴は次の二つのhom集合が自然同型であることを教えてくれる：
+\[\cat{C}(L (), c) \cong \Set((), R c)\]
+与えられた$c$について、右辺は単元集合$()$から$R c$への関数の集合だ。以前に見たように、そのような各関数は集合$R c$から一つの要素を選ぶ。そのような関数の集合は集合$R c$と同型だ。したがって：
+\[\cat{C}(L (), -) \cong R\]
+これは$R$が確かに表現可能であることを示す。
+
+\section{随伴からの積}
+
+これまでに普遍的構成を使っていくつかの概念を導入してきた。それらの概念の多くは、グローバルに定義すると随伴を使って表現しやすくなる。最も単純な非自明な例は積だ。\hyperref[products-and-coproducts]{積の普遍的構成}の要点は、任意の積のような候補を普遍的積を通じて因数分解できることだ。
+
+より正確には、二つの対象$a$と$b$の積は、二つの射$\mathit{fst}$と$\mathit{snd}$を備えた対象$(a\times{}b)$（Haskell表記では\code{(a, b)}）であり、二つの射$p \Colon c \to a$と$q \Colon c \to b$を備えた他の候補$c$に対して、$p$と$q$を$\mathit{fst}$と$\mathit{snd}$を通じて因数分解する唯一の射$m \Colon c \to (a, b)$が存在する。
+
+以前に見たように、Haskellでは二つの射影からこの射を生成する\code{factorizer}を実装できる：
+
+\src{snippet07}
+因数分解条件が成立することは容易に検証できる：
+
+\src{snippet08}
+射のペア\code{p}と\code{q}を取り、別の射\code{m = factorizer p q}を生成する写像がある。
+
+これを随伴を定義するために必要な二つのhom集合間の写像にどう翻訳できるか？コツは$\Hask$の外に出て、射のペアを積圏の単一の射として扱うことだ。
+
+積圏とは何かを思い出そう。任意の二つの圏$\cat{C}$と$\cat{D}$をとる。積圏$\cat{C}\times{}\cat{D}$の対象は対象のペアで、一つは$\cat{C}$から、一つは$\cat{D}$からだ。射は射のペアで、一つは$\cat{C}$から、一つは$\cat{D}$からだ。
+
+ある圏$\cat{C}$で積を定義するために、積圏$\cat{C}\times{}\cat{C}$から始めるべきだ。$\cat{C}$からの射のペアは積圏$\cat{C}\times{}\cat{C}$の単一の射だ。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/adj-productcat.jpg}
+\end{figure}
+
+\noindent
+積を定義するために積圏を使うことは最初は少し混乱するかもしれない。しかし、これらは非常に異なる積だ。積圏を定義するために普遍的構成は必要ない。必要なのは対象のペアと射のペアという概念だけだ。
+
+しかし、$\cat{C}$の対象のペアは$\cat{C}$の対象では\emph{ない}。それは別の圏$\cat{C}\times{}\cat{C}$の対象だ。ペアは正式に$\langle a, b \rangle$と書け、$a$と$b$は$\cat{C}$の対象だ。一方、普遍的構成は対象$a\times{}b$（Haskellでは\code{(a, b)}）を定義するために必要で、これは\emph{同じ}圏$\cat{C}$の対象だ。この対象は普遍的構成によって指定された方法でペア$\langle a, b \rangle$を表すことが期待される。これは常に存在するわけではなく、$\cat{C}$の対象のいくつかのペアに対して存在しても、他のペアには存在しないかもしれない。
+
+\code{factorizer}をhom集合の写像として見てみよう。最初のhom集合は積圏$\cat{C}\times{}\cat{C}$にあり、二番目は$\cat{C}$にある。$\cat{C}\times{}\cat{C}$の一般的な射は射のペア$\langle f, g \rangle$だ：
+\begin{gather*}
+  f \Colon c' \to a \\
+  g \Colon c'' \to b
+\end{gather*}
+ここで$c''$は$c'$と異なる可能性がある。しかし積を定義するためには、$\cat{C}\times{}\cat{C}$の特別な射、つまり同じソース対象$c$を共有するペア$p$と$q$に興味がある。これは問題ない：随伴の定義では、左のhom集合のソースは任意の対象ではなく、左関手$L$が右の圏のある対象に作用した結果だ。この役割に合う関手は推測しやすい。$\cat{C}$から$\cat{C}\times{}\cat{C}$への\newterm{対角関手}（diagonal functor）$\Delta$で、対象への作用は：
+\[\Delta c = \langle c, c \rangle\]
+したがって、随伴の左辺のhom集合は：
+\[(\cat{C}\times{}\cat{C})(\Delta c, \langle a, b \rangle)\]
+積圏のhom集合だ。その要素は射のペアで、\code{factorizer}への引数として認識できる：
+\[(c \to a) \to (c \to b) \ldots{}\]
+右辺のhom集合は$\cat{C}$にあり、ソース対象$c$と$\cat{C}\times{}\cat{C}$のターゲット対象に作用する何らかの関手$R$の結果の間にある。それがペア$\langle a, b \rangle$を積対象$a\times{}b$に写す関手だ。hom集合のこの要素を\code{factorizer}の\emph{結果}として認識する：
+\[\ldots{} \to (c \to (a, b))\]
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/adj-product.jpg}
+\end{figure}
+
+\noindent
+まだ完全な随伴は得られていない。そのために、まず\code{factorizer}が可逆である必要がある。hom集合間の\emph{同型}を構築しているのだ。\code{factorizer}の逆は射$m$、つまりある対象$c$から積対象$a\times{}b$への射から始まるべきだ。言い換えれば、$m$は次の要素でなければならない：
+\[\cat{C}(c, a\times{}b)\]
+逆factorizerは$m$を$\cat{C}\times{}\cat{C}$の射$\langle p, q \rangle$に写すべきで、それは$\langle c, c \rangle$から$\langle a, b \rangle$への射、つまり次の要素の射だ：
+\[(\cat{C}\times{}\cat{C})(\Delta\ c, \langle a, b \rangle)\]
+その写像が存在するなら、対角関手の右随伴が存在すると結論できる。その関手が積を定義する。
+
+Haskellでは、\code{m}をそれぞれ\code{fst}と\code{snd}と合成することで\code{factorizer}の逆を常に構築できる。
+
+\begin{snip}{haskell}
+p = fst . m
+q = snd . m
+\end{snip}
+積を定義する二つの方法の同値性の証明を完結させるには、hom集合間の写像が$a$、$b$、$c$について自然であることも示す必要がある。これは熱心な読者への練習問題として残しておく。
+
+まとめると：圏論的積は対角関手の\newterm{右随伴}（right adjoint）としてグローバルに定義できる：
+\[(\cat{C}\times{}\cat{C})(\Delta c, \langle a, b \rangle) \cong \cat{C}(c, a\times{}b)\]
+ここで、$a\times{}b$は右随伴関手$\mathit{Product}$のペア$\langle a, b \rangle$への作用の結果だ。$\cat{C}\times{}\cat{C}$からの任意の関手は双関手であるから、$\mathit{Product}$は双関手だ。Haskellでは、$\mathit{Product}$双関手は単に\code{(,)}と書かれる。これを二つの型に適用してその積型を得ることができる：
+
+\src{snippet09}
+
+\section{随伴からの指数}
+
+指数$b^a$、つまり関数対象$a \Rightarrow b$は\hyperref[function-types]{普遍的構成}を使って定義できる。この構成は、対象のすべてのペアについて存在する場合、随伴として見ることができる。再び、コツは次の命題に集中することだ：
+
+\begin{quote}
+  射$g \Colon z\times{}a \to b$を持つ他の任意の対象$z$に対して、唯一の射$h \Colon z \to (a \Rightarrow b)$が存在する
+\end{quote}
+この命題はhom集合間の写像を確立する。
+
+この場合、同じ圏の対象を扱っているため、二つの随伴関手は自己関手だ。左（自己）関手$L$は対象$z$に作用すると$z\times{}a$を生成する。これは固定された$a$との積を取ることに対応する関手だ。
+
+右（自己）関手$R$は$b$に作用すると関数対象$a \Rightarrow b$（または$b^a$）を生成する。ここでも$a$は固定されている。これら二つの関手間の随伴はしばしば次のように書かれる：
+\[-\times{}a \dashv (-)^a\]
+この随伴の基となるhom集合の写像は、普遍的構成で使った図式を描き直すと最もよく見える。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/adj-expo.jpg}
+\end{figure}
+
+\noindent
+$\mathit{eval}$射\footnote{ch.9の\hyperref[function-types]{普遍的構成}を参照。}はこの随伴の余単位に他ならないことに注意しよう：
+\[(a \Rightarrow b)\times{}a \to b\]
+ここで：
+\[(a \Rightarrow b)\times{}a = (L \circ R) b\]
+普遍的構成は同型を除いて一意な対象を定義することを以前に述べた。そのため「その」積と「その」指数がある。この性質は随伴にも翻訳される：関手が随伴を持つ場合、この随伴は同型を除いて一意だ。
+
+\section{練習問題}
+
+\begin{enumerate}
+  \tightlist
+  \item
+        二つの（反変）関手の間の変換$\psi$の自然性の正方形を導け：
+        \begin{gather*}
+          a \to \cat{C}(L a, b) \\
+          a \to \cat{D}(a, R b)
+        \end{gather*}
+  \item
+        随伴の二番目の定義のhom集合の同型から始めて余単位$\varepsilon$を導け。
+  \item
+        随伴の二つの定義の同値性の証明を完成させよ。
+  \item
+        余積が随伴で定義できることを示せ。余積のfactorizerの定義から始めよ。
+  \item
+        余積が対角関手の左随伴であることを示せ。
+  \item
+        Haskellで積と関数対象の間の随伴を定義せよ。
+\end{enumerate}
